@@ -40,19 +40,13 @@ def Worker(port, command_queue):
     dsair = DSAir2(port)
     
     while True:
-        try:
-            while True:
-                try:
-                    command = command_queue.get_nowait();
-                    dsair.send(command)
-                    print(command)
-                    time.sleep(0.1)
-                except queue.Empty:
-                    break
+        while True:
+            try:
+                command = command_queue.get_nowait();
+                dsair.send(command)
+                print(command)
+                time.sleep(0.1)
+            except queue.Empty:
+                break
 
-            time.sleep(0.01)
-        # 緊急停止
-        except:
-            dsair.reset()
-            print('DSAir緊急停止しました')
-            raise
+        time.sleep(0.01)

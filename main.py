@@ -55,12 +55,13 @@ Command.switchToDCC(command_queue)
 time.sleep(3)
 
 last_loop_time = time.time()
-last_db_check = time.time()
-last_usb_check = time.time()
+last_db_check = 0
+last_usb_check = 0
 
 # メインループは送信の余裕を持って0.5秒で回す
 MAIN_LOOP = 0.5
 
+print('起動完了')
 while True:
     try:
         if not 'dsair' in excludes and not dsair_process.is_alive():
@@ -70,6 +71,7 @@ while True:
         for i in range(min(command_queue.qsize() - 5, 0)):
             try:
                 command_queue.get_nowait()
+                print('dropped queue')
             except queue.Empty:
                 break
         
@@ -77,9 +79,6 @@ while True:
         random.shuffle(mascons)
         for mascon in mascons:
             mascon.advanceTime(command_queue)
-            
-        # キューに溜まったコマンド数(開発用)
-        print('command_queue size: ' + str(command_queue.qsize()))
         
         # 5秒に1回SQLiteに問い合わせて各マスコン(列車)のパラメータを反映
         if (time.time() - last_db_check) > 5.0:
@@ -95,7 +94,8 @@ while True:
 
         # メインループにかかった時間(開発用)
         main_loop_time = time.time() - last_loop_time
-        print('main loop: ' + str(main_loop_time))
+        if main_loop_time > 0.1:
+            print('main loop: ' + str(main_loop_time))
 
         time.sleep(max(MAIN_LOOP - main_loop_time, 0))
         last_loop_time = time.time()
@@ -111,4 +111,6 @@ while True:
         Command.reset(command_queue)
         time.sleep(0.5)
         # TODO: RasPiの青ランプ消す
+        
+        dsair_process.kill()
         raise

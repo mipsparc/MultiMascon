@@ -14,6 +14,7 @@ class OHC_PC01A(Mascon):
         pygame.joystick.init()
         self.joy = pygame.joystick.Joystick(0)
         self.joy.init()
+        pygame.event.get()
         
     # 主幹制御器状態から力行ノッチ・ブレーキノッチ指令に変換する
     def convertPosToAccelBrake(self, pos):

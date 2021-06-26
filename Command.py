@@ -12,17 +12,17 @@ class Command:
         
     @classmethod
     def setLocoSpeed(self, command_queue, loco_addr, speed):
-        if speed_level > 0:
-            out_speed = int(speed_level)
+        if speed > 0:
+            out_speed = int(speed)
         else:
             out_speed = 0
         
-        command_queue.put(f'setLocoSpeed({self.loco_addr + self.LOCO_DEFAULT_ADDR},{out_speed},2)')
+        command_queue.put(f'setLocoSpeed({loco_addr + self.LOCO_DEFAULT_ADDR},{out_speed},2)')
                 
     @classmethod
     def setLocoDirection(self, command_queue, loco_addr, way):
         if way in (1, 2):
-            command_queue.put(f'setLocoDirection({self.loco_addr + LOCO_DEFAULT_ADDR},{way})')
+            command_queue.put(f'setLocoDirection({loco_addr + self.LOCO_DEFAULT_ADDR},{way})')
     
     @classmethod
     def switchToDc(self, command_queue):
