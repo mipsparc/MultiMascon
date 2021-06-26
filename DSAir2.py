@@ -40,20 +40,15 @@ def Worker(port, command_queue):
     
     while True:
         try:
-            commands = [];
-            #キューを一旦すべて取得する
             while True:
                 try:
-                    commands.append(command_queue.get_nowait())
+                    command = command_queue.get_nowait();
                 except queue.Empty:
                     break
-            
-            #取得したコマンドをすべて一定間隔で送信する
-            print('送出コマンド数: ' + str(len(commands)))
-            for command in commands:
                 dsair.send(command)
                 # ブロックする
                 print(dsair.readline())
+            time.sleep(0.01)
         # 緊急停止
         finally:
             dsair.reset()

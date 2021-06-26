@@ -1,14 +1,18 @@
 ## テーブル
 - 車両・速度・出力管理テーブル
-car_addr int
+car_type_id int
 speed int (これの最大値を最高速度とする)
 level int (上に同じ)
+
+- 車両・加速度管理テーブル
+car_type_id int
+accel float
 
 - コントローラ・アドレス(車両)管理テーブル (同じコントローラなら区別しない、早く認識した順)
 car_addr int
 controller_code text
 
-- キーマップ(ボタンとその動作)
+- キーマップ(ボタンとその動作(コマンド))
 
 192.168.3.190に有線は固定した。ID:root pass:dietpi
 SSID:MultiMascon-[ランダム] PSK:12345678
@@ -25,8 +29,9 @@ flask run --host=0.0.0.0 --port=80
 - hostapd.confを初期化
 - マニュアル作る
 - シール貼る
+- kphベースでやる
 
-エラーログファイルをdatabase領域に置く
+エラーログファイルはtmp領域に置く? WebUIから見れるように。
 キーマップ（どのボタンがどの動作）sqlite
 
 パーティションは

@@ -32,23 +32,28 @@ if not 'log' in excludes:
 pygame.init()
 
 mascons = []
-# demo code
+# demo code (本来はメインループで取得する)
 mascons.append(OHC_PC01A())
 
 command_queue = Queue()
 
-# DSAirとの通信用のプロセスをつくる
+# DSAirとの通信プロセスをつくる
 if not 'dsair' in excludes:
     dsair_process = Process(target=DSAir2.Worker, args=(dsair_port, command_queue))
     # 親プロセスが死んだら自動的に終了
     dsair_process.daemon = True
     dsair_process.start()
 
-# TODO RasPiの青ランプつける
+if not 'raspi' in excludes:
+    # TODO RasPiの青ランプつける
+    pass
 
 last_loop_time = time.time()
 last_db_check = time.time()
 last_usb_check = time.time()
+
+# メインループは送信の余裕を持って0.4秒で回す
+MAIN_LOOP = 0.4
 while True:
     try:
         if not 'dsair' in excludes and not dsair_process.is_alive():
@@ -61,35 +66,39 @@ while True:
             except queue.Empty:
                 break
             
-            # 特定のマスコンからの命令だけが処理されないようにシャッフルする
-            random.shuffle(mascons)
+        # 特定のマスコンからの命令だけが処理されないようにシャッフルする
+        random.shuffle(mascons)
+        for mascon in mascons:
+            mascon.advanceTime()
+            
+            #TODO マスコン(列車)からコマンドを受領する
+            commands = [] # 追加
+            
+            # キューに溜まったコマンド数(開発用)
+            print('command_queue size: ' + str(command_queue.qsize()))
+            for command in commands:
+                command_queue.put(command)
+        
+        # 5秒に1回SQLiteに問い合わせて各マスコン(列車)のパラメータを反映
+        if (time.time() - last_db_check) > 5.0:
             for mascon in mascons:
-                #TODO マスコン(列車)からコマンドを受領する
-                commands = [] # 追加
-                
-                # キューに溜まったコマンド数(開発用)
-                print('command_queue size: ' + str(command_queue.qsize()))
-                for command in commands:
-                    command_queue.put(command)
-            
-            # 5秒に1回SQLiteに問い合わせて各マスコン(列車)のパラメータを反映
-            if (time.time() - last_db_check) > 5.0:
-                # TODO: SQLite問い合わせ
-                last_db_check = time.time()
-                pass
-            
-            # 1秒に一回pyusbで接続・抜取情報を取得する
-            if (time.time() - last_usb_check) > 1.0:
-                #TODO: pyusbで情報取得してmasconsに入れたり抜いたりする
-                last_usb_check = time.time()
-                pass
+                mascon.fetchDatabase()
+            last_db_check = time.time()
+        
+        # 1秒に一回pyusbで接続・抜取情報を取得する
+        if (time.time() - last_usb_check) > 1.0:
+            #TODO: pyusbで情報取得してmasconsに入れたり抜いたりする
+            last_usb_check = time.time()
+            pass
 
-            # メインループにかかった時間(開発用)
-            main_loop_time = time.time() - last_loop_time
-            print('main loop: ' + str(main_loop_time))
-            # メインループは0.05 ~ 0.4秒とする
-            time.sleep(max(0.4 - main_loop_time, 0.05))
-            last_loop_time = time.time()
+        # メインループにかかった時間(開発用)
+        main_loop_time = time.time() - last_loop_time
+        print('main loop: ' + str(main_loop_time))
+        # メインループは一周0.4秒とする
+        time.sleep(max(MAIN_LOOP - main_loop_time, 0))
+        if main_loop_time > MAIN_LOOP:
+            print('main loop too long!!')
+        last_loop_time = time.time()
     
     # 緊急停止時
     finally:

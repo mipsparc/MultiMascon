@@ -3,7 +3,7 @@
 class Command:
     MAX_SPEED = 800
     
-    # 3 はデフォルトアドレス
+    # 3 がデフォルトアドレス
     LOCO_DEFAULT_ADDR = 49152
     
     last_loco_light = False
