@@ -1,13 +1,19 @@
 #coding: utf-8
 
 import Smooth
+from Command import Command
 
 class Mascon:
     kph = 0
+    last_speed_level = 0
+    last_way = 0
+    # DBから情報取得済みかどうか
+    fetched = False
     
     def fetchDatabase(self):
         # TODO: SQLiteから取得する
         # demo
+        self.fetched = True
         self.ADDR = 3
         # demo 速度(kph)・出力値
         self.SPEED_OUTPUT_PROFILE = [
@@ -25,12 +31,30 @@ class Mascon:
         ]
         # demo 動き出す出力値(下駄を履かせる)
         self.BASE_LEVEL = 85
+        # demo ライトファンクション番号
+        self.LIGHT_FUNC_NUM = 0
 
-    def advanceTime(self):
-        self.loadStatus()
-        output = self.getOutput()
+    def advanceTime(self, command_queue):
+        if not self.fetched:
+            return
         
-    def getOutput(self):
+        self.loadStatus()
+        
+        way = self.way
+        
+        if self.last_way != way:
+            Command.setLocoDirection(command_queue, self.ADDR, way)
+            if way == 0:
+                Command.setFunction(command_queue, self.ADDR, self.LIGHT_FUNC_NUM, 0)
+            else:
+                Command.setFunction(command_queue, self.ADDR, self.LIGHT_FUNC_NUM, 1)
+        
+        speed_level = self.getSpeedLevel()
+        if self.last_speed_level != speed_level:
+            Command.setLocoSpeed(command_queue, self.ADDR, speed_level)
+            self.last_speed_level = speed_level
+       
+    def getSpeedLevel(self):
         # TODO この部分も管理画面から弄れるようにする
         if self.kph < 30.0:
             accel_level = self.accel_knotch * 0.3

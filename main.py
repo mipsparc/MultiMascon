@@ -4,6 +4,7 @@
 import os
 import LogRotate
 from multiprocessing import Process, Queue
+import queue
 import DSAir2
 import time
 import sys
@@ -12,6 +13,7 @@ from Mascon import Mascon
 from OHC_PC01A import OHC_PC01A
 from DENSYA_CON_T01 import DENSYA_CON_T01
 import pygame
+from Command import Command
 
 # Pygameをヘッドレスでも動かせるように対策
 os.environ["SDL_VIDEODRIVER"] = "dummy"
@@ -48,36 +50,36 @@ if not 'raspi' in excludes:
     # TODO RasPiの青ランプつける
     pass
 
+# DCCモード起動
+Command.switchToDCC(command_queue)
+time.sleep(3)
+
 last_loop_time = time.time()
 last_db_check = time.time()
 last_usb_check = time.time()
 
-# メインループは送信の余裕を持って0.4秒で回す
-MAIN_LOOP = 0.4
+# メインループは送信の余裕を持って0.5秒で回す
+MAIN_LOOP = 0.5
+
 while True:
     try:
         if not 'dsair' in excludes and not dsair_process.is_alive():
             raise ValueError('DSAir2プロセスが起動していません')
         
-        # ここまでで処理しきれなかったコマンドは積み上がる一方なので飛ばす
-        while True:
+        # 5個以上積み上がったコマンドは飛ばす
+        for i in range(min(command_queue.qsize() - 5, 0)):
             try:
                 command_queue.get_nowait()
             except queue.Empty:
                 break
-            
-        # 特定のマスコンからの命令だけが処理されないようにシャッフルする
+        
+        # 特定のマスコンからの命令だけが処理されないように毎回シャッフルする
         random.shuffle(mascons)
         for mascon in mascons:
-            mascon.advanceTime()
+            mascon.advanceTime(command_queue)
             
-            #TODO マスコン(列車)からコマンドを受領する
-            commands = [] # 追加
-            
-            # キューに溜まったコマンド数(開発用)
-            print('command_queue size: ' + str(command_queue.qsize()))
-            for command in commands:
-                command_queue.put(command)
+        # キューに溜まったコマンド数(開発用)
+        print('command_queue size: ' + str(command_queue.qsize()))
         
         # 5秒に1回SQLiteに問い合わせて各マスコン(列車)のパラメータを反映
         if (time.time() - last_db_check) > 5.0:
@@ -94,13 +96,19 @@ while True:
         # メインループにかかった時間(開発用)
         main_loop_time = time.time() - last_loop_time
         print('main loop: ' + str(main_loop_time))
-        # メインループは一周0.4秒とする
+
         time.sleep(max(MAIN_LOOP - main_loop_time, 0))
-        if main_loop_time > MAIN_LOOP:
-            print('main loop too long!!')
         last_loop_time = time.time()
     
     # 緊急停止時
-    finally:
-        dsair_process.close()
-        # RasPiの青ランプ消す
+    except:
+        while True:
+            try:
+                command_queue.get_nowait()
+            except queue.Empty:
+                break
+        
+        Command.reset(command_queue)
+        time.sleep(0.5)
+        # TODO: RasPiの青ランプ消す
+        raise

@@ -34,6 +34,7 @@ class DSAir2:
         
     def read(self):
         self.ser.readline()
+        self.ser.reset_input_buffer()
 
 def Worker(port, command_queue):
     dsair = DSAir2(port)
@@ -43,12 +44,15 @@ def Worker(port, command_queue):
             while True:
                 try:
                     command = command_queue.get_nowait();
+                    dsair.send(command)
+                    print(command)
+                    time.sleep(0.1)
                 except queue.Empty:
                     break
-                dsair.send(command)
-                # ブロックする
-                print(dsair.readline())
+
             time.sleep(0.01)
         # 緊急停止
-        finally:
+        except:
             dsair.reset()
+            print('DSAir緊急停止しました')
+            raise

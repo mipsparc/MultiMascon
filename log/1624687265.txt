@@ -1,0 +1,28 @@
+Process Process-1:
+Traceback (most recent call last):
+  File "/home/mipsparc/.local/lib/python3.8/site-packages/serial/serialposix.py", line 265, in open
+    self.fd = os.open(self.portstr, os.O_RDWR | os.O_NOCTTY | os.O_NONBLOCK)
+FileNotFoundError: [Errno 2] No such file or directory: '/dev/ttyUSB0'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 315, in _bootstrap
+    self.run()
+  File "/usr/lib/python3.8/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/home/mipsparc/Dropbox/python/MultiMascon/DSAir2.py", line 40, in Worker
+    dsair = DSAir2(port)
+  File "/home/mipsparc/Dropbox/python/MultiMascon/DSAir2.py", line 11, in __init__
+    self.ser = serial.Serial(port, baudrate=115200, timeout=0.2, write_timeout=0.2, inter_byte_timeout=0.1)
+  File "/home/mipsparc/.local/lib/python3.8/site-packages/serial/serialutil.py", line 240, in __init__
+    self.open()
+  File "/home/mipsparc/.local/lib/python3.8/site-packages/serial/serialposix.py", line 268, in open
+    raise SerialException(msg.errno, "could not open port {}: {}".format(self._port, msg))
+serial.serialutil.SerialException: [Errno 2] could not open port /dev/ttyUSB0: [Errno 2] No such file or directory: '/dev/ttyUSB0'
+Traceback (most recent call last):
+  File "main.py", line 53, in <module>
+    Command.switchToDCC(command_queue)
+  File "/home/mipsparc/Dropbox/python/MultiMascon/Command.py", line 37, in switchToDCC
+    time.sleep(0.3)        
+NameError: name 'time' is not defined
