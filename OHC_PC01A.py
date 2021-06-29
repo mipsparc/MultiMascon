@@ -7,9 +7,6 @@ import time
 from Mascon import Mascon
 
 class OHC_PC01A(Mascon):
-    CONNECT = 'joystick'
-    NAME = 'OHC_PC01A'
-    
     def __init__(self):
         pygame.joystick.init()
         self.joy = pygame.joystick.Joystick(0)
@@ -55,6 +52,7 @@ class OHC_PC01A(Mascon):
     def loadStatus(self):
         pygame.event.get()
         
+        # TODO: 接続切れたら当該列車は停止して、全体はそのまま生きる
         accel_knotch, brake_knotch = self.convertPosToAccelBrake([
             self.joy.get_button(6),
             self.joy.get_button(7),

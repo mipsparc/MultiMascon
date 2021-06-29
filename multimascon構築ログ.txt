@@ -1,0 +1,43 @@
+11  ip a
+15  dietpi-config → いろいろ設定。ipv6切ったり、wifionにしたり
+17  sudo apt install python3
+20  sudo apt install python3-pip
+23  pip3 install pyserial
+36  nano main.py
+37  pip3 install pygame
+39  sudo apt install sudo apt install libsdl2
+40  sudo apt install libsdl2-2.0-0 
+
+/var/lib/dietpi/dietpi-autostart/custom.sh
+vim /var/lib/dietpi/postboot.d/ChangeSSID.sh
+dtoverlay=gpio-poweroff,active_low,gpiopin=3
+apt install python3-gpiozero
+G_AGI libpam-systemd
+
+
+192.168.3.190に有線は固定した。ID:root pass:multimascon
+SSID:MultiMascon-[ランダム] PSK:12345678
+
+DHCPしっかり書く
+root@DesktopStation:~# sudo vim /etc/dnsmasq.conf
+root@DesktopStation:~# sudo /etc/init.d/dnsmasq restart
+
+flask run --host=0.0.0.0 --port=80
+
+出荷イメージ作成時は、
+- / をroに変更
+- /mnt/multimasconをroに(OTA時のみrwにする)
+- hostapd.confを初期化
+
+エラーログファイルはWebUIから見れるように。
+パーティションは
+- ext4(DietPi) ro
+- btrfs(multimascon) ro
+- btrfs(database) rw
+- FAT32(RESCUE)
+
+うまくソフトやDBが読み込めなかったら、btrfsの復旧をする
+OTAアップデートはWebにつながっていないためできない
+バックアップ用にも配置する
+
+

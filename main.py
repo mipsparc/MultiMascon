@@ -21,10 +21,9 @@ os.environ["SDL_VIDEODRIVER"] = "dummy"
 dsair_port = '/dev/ttyUSB0'
 
 excludes = sys.argv[1:]
-# ex) python3 main.py log dsair
+# ex) python3 main.py log dsair raspi
 
 # 標準エラー出力をログファイルにする
-# log が入っていたら普通に出力する
 if not 'log' in excludes:
     LOG_DIR = 'log'
     os.makedirs(LOG_DIR, exist_ok=True)
@@ -34,7 +33,7 @@ if not 'log' in excludes:
 pygame.init()
 
 mascons = []
-# demo code (本来はメインループで取得する)
+# TODO demo code (本来はメインループで取得する)
 mascons.append(OHC_PC01A())
 
 command_queue = Queue()
@@ -52,7 +51,7 @@ if not 'raspi' in excludes:
 
 # DCCモード起動
 Command.switchToDCC(command_queue)
-time.sleep(3)
+time.sleep(1)
 
 last_loop_time = time.time()
 last_db_check = 0

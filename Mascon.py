@@ -2,37 +2,28 @@
 
 import Smooth
 from Command import Command
+from DB import DB
 
 class Mascon:
     kph = 0
     last_speed_level = 0
     last_way = 0
-    # DBから情報取得済みかどうか
+    # DBから初回情報取得済みかどうか
     fetched = False
     
     def fetchDatabase(self):
         # TODO: SQLiteから取得する
         # demo
-        self.fetched = True
         self.ADDR = 4
-        # demo 速度(kph)・出力値
-        self.SPEED_OUTPUT_PROFILE = [
-            [0.0, 0],
-            [5.0, 30],
-            [15.0, 100],
-            [20.0, 200],
-            [30.0, 300],
-            [40.0, 400],
-            [50.0, 500],
-            [60.0, 600],
-            [90.0, 900],
-            [91.0, 901],
-            [999.9, None], #dummy
-        ]
+        # TODO: 設定画面などから取得
+        curve_group_id = 1
+        self.SPEED_OUTPUT_PROFILE = DB.getSpeedAccelCurveById(curve_group_id)
         # demo 動き出す出力値(下駄を履かせる)
         self.BASE_LEVEL = 85
         # demo ライトファンクション番号
         self.LIGHT_FUNC_NUM = 0
+        
+        self.fetched = True
 
     def advanceTime(self, command_queue):
         if not self.fetched:

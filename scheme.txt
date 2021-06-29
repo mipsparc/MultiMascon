@@ -1,45 +1,28 @@
 ## テーブル
-- 車両・速度・出力管理テーブル
-car_type_id int
-speed int (これの最大値を最高速度とする)
-level int (上に同じ)
+- 速度・出力管理テーブル
+CREATE TABLE speed_output_curve(
+    curve_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    curve_group_id INTEGER NOT NULL,
+    speed INTEGER NOT NULL CHECK(speed >= 0),
+    output INTEGER NOT NULL CHECK(output >= 0)
+);
+speedの最大値が最高速度
 
-- 車両・加速度管理テーブル
-car_type_id int
-accel float
+- 速度・加速度管理テーブル
+CREATE TABLE speed_accel_curve(
+    curve_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    accel REAL NOT NULL CHECK(accel >= 0),
+    speed INTEGER NOT NULL CHECK(speed >= 0)
+);
 
-- コントローラ・アドレス(車両)管理テーブル (同じコントローラなら区別しない、早く認識した順)
+- コントローラ・アドレス(車両)管理テーブル (同じコントローラなら区別しない、早く認識した順) (ポート?)
 car_addr int
-controller_code text
+controller_bus int
+controller_port int
+
+- 車種管理テーブル
+car_type INTEGER
+curve_group_id INTEGER
+base_level INTEGER
 
 - キーマップ(ボタンとその動作(コマンド))
-
-192.168.3.190に有線は固定した。ID:root pass:dietpi
-SSID:MultiMascon-[ランダム] PSK:12345678
-
-DHCPしっかり書く
-root@DesktopStation:~# sudo vim /etc/dnsmasq.conf
-root@DesktopStation:~# sudo /etc/init.d/dnsmasq restart
-
-flask run --host=0.0.0.0 --port=80
-
-出荷時は、
-- / をroに変更
-- /mnt/multimasconをroに(OTA時のみrwにする)
-- hostapd.confを初期化
-- マニュアル作る
-- シール貼る
-- kphベースでやる
-
-エラーログファイルはtmp領域に置く? WebUIから見れるように。
-キーマップ（どのボタンがどの動作）sqlite
-
-パーティションは
-- ext4(DietPi) ro
-- btrfs(multimascon) ro
-- btrfs(database) rw
-- FAT32(RESCUE)
-
-うまくソフトやDBが読み込めなかったら、btrfsの復旧をする
-OTAアップデートも可能、バックアップ用にも配置する
-
