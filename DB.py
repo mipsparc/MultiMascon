@@ -11,7 +11,6 @@ class DB:
     
     @classmethod
     def getSpeedAccelCurveById(self, curve_group_id):
-        print(self.dbfile)
         con = sqlite3.connect(self.dbfile)
         cur = con.cursor()
         cur.execute('''
