@@ -14,15 +14,17 @@ from OHC_PC01A import OHC_PC01A
 from DENSYA_CON_T01 import DENSYA_CON_T01
 import pygame
 from Command import Command
+import israspi
+import EmergencyLed
 
 # Pygameをヘッドレスでも動かせるように対策
-os.environ["SDL_VIDEODRIVER"] = "dummy"
-# DSAir2のポート
-dsair_port = '/dev/ttyUSB0'
+os.environ['SDL_VIDEODRIVER'] = 'dummy'
 
 excludes = sys.argv[1:]
-# ex) python3 main.py log dsair raspi
+# ex) python3 main.py log dsair
 
+# TODO databaseディレクトリにログを記録する
+# TODO ログをWebUIから見れるようにする
 # 標準エラー出力をログファイルにする
 if not 'log' in excludes:
     LOG_DIR = 'log'
@@ -38,16 +40,18 @@ mascons.append(OHC_PC01A())
 
 command_queue = Queue()
 
+if israspi.is_raspi:
+    from gpiozero import LED
+    led = LED(15)
+    led.on()
+
+# TODO 異常時などステータスを上位にshared memで伝達する
 # DSAirとの通信プロセスをつくる
 if not 'dsair' in excludes:
-    dsair_process = Process(target=DSAir2.Worker, args=(dsair_port, command_queue))
+    dsair_process = Process(target=DSAir2.Worker, args=(command_queue))
     # 親プロセスが死んだら自動的に終了
     dsair_process.daemon = True
     dsair_process.start()
-
-if not 'raspi' in excludes:
-    # TODO RasPiの青ランプつける
-    pass
 
 # DCCモード起動
 Command.switchToDCC(command_queue)
@@ -90,17 +94,30 @@ while True:
             #TODO: pyusbで情報取得してmasconsに入れたり抜いたりする
             last_usb_check = time.time()
             pass
+        
+        if israspi.is_raspi:
+            if time.time() % 1 > 0.5:
+                led.on()
+            else:
+                led.off()
 
         # メインループにかかった時間(開発用)
         main_loop_time = time.time() - last_loop_time
         if main_loop_time > 0.1:
             print('main loop: ' + str(main_loop_time))
-
-        time.sleep(max(MAIN_LOOP - main_loop_time, 0))
         last_loop_time = time.time()
+
+        #確実に一周がMAIN_LOOP時間とする
+        time.sleep(max(MAIN_LOOP - main_loop_time, 0))
     
     # 緊急停止時
     except:
+        # 点灯しっぱなしは異常という考え方
+        if israspi.is_raspi:
+            led.close()
+            emg_led_process = Process(target=EmergencyLed.Worker)
+            emg_led_process.start()
+
         while True:
             try:
                 command_queue.get_nowait()
@@ -109,7 +126,7 @@ while True:
         
         Command.reset(command_queue)
         time.sleep(0.5)
-        # TODO: RasPiの青ランプ消す
-        
-        dsair_process.kill()
+        if not 'dsair' in excludes:
+            dsair_process.kill()
+
         raise

@@ -7,27 +7,30 @@
 37  pip3 install pygame
 39  sudo apt install sudo apt install libsdl2
 40  sudo apt install libsdl2-2.0-0 
+pip3 install rpi.gpio
 
 /var/lib/dietpi/dietpi-autostart/custom.sh
-vim /var/lib/dietpi/postboot.d/ChangeSSID.sh
 dtoverlay=gpio-poweroff,active_low,gpiopin=3
 apt install python3-gpiozero
 G_AGI libpam-systemd
 
-
+有線接続は非推奨
 192.168.3.190に有線は固定した。ID:root pass:multimascon
 SSID:MultiMascon-[ランダム] PSK:12345678
+http://mm.test にアクセスしてもらう
 
 DHCPしっかり書く
 root@DesktopStation:~# sudo vim /etc/dnsmasq.conf
 root@DesktopStation:~# sudo /etc/init.d/dnsmasq restart
 
-flask run --host=0.0.0.0 --port=80
+手元試験コマンド
+flask run --reload
 
-出荷イメージ作成時は、
-- / をroに変更
-- /mnt/multimasconをroに(OTA時のみrwにする)
+出荷書き込みイメージ作成時は、
+- DietPi(/) をroに変更
+- /mnt/multimasconをroに(OTA時のみrwにする仕組みを入れる)
 - hostapd.confを初期化
+- ログを消す
 
 エラーログファイルはWebUIから見れるように。
 パーティションは
@@ -36,8 +39,17 @@ flask run --host=0.0.0.0 --port=80
 - btrfs(database) rw
 - FAT32(RESCUE)
 
-うまくソフトやDBが読み込めなかったら、btrfsの復旧をする
-OTAアップデートはWebにつながっていないためできない
-バックアップ用にも配置する
+起動前のスクリプト置き場
+vim /var/lib/dietpi/postboot.d/
 
+DBの再構築は難しいので、DBは予め空でもCREATE TABLEしておく。
+
+アップデートファイル構築
+- バージョンファイルを書き換える
+tar -jcf MultiMascon_v0.01.tar.bz2 MultiMascon/ mm_web/ (無駄なファイルを消す、ファイル名バージョン変更、img拡張子に変える)
+
+ランプ状態
+起動途中または正常終了済み: 滅(OFF)
+正常実行中: 点滅
+異常: 一定時間以上点灯(ON)したまま
 

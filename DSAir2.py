@@ -5,6 +5,9 @@
 import serial
 import time
 import queue
+import traceback
+import sys
+import glob
 
 class DSAir2:   
     def __init__(self, port):
@@ -36,17 +39,22 @@ class DSAir2:
         self.ser.readline()
         self.ser.reset_input_buffer()
 
-def Worker(port, command_queue):
-    dsair = DSAir2(port)
-    
+# 簡単に落ちないように、どんなエラーが出ても一定時間待って再確立を試みる
+def Worker(command_queue):
     while True:
-        while True:
-            try:
-                command = command_queue.get_nowait();
-                dsair.send(command)
-                print(command)
-                time.sleep(0.1)
-            except queue.Empty:
-                break
-
-        time.sleep(0.01)
+        try:
+            # ttyUSB1になることもあるので
+            port = glob.glob('/dev/ttyUSB*')[0]
+            dsair = DSAir2(port)
+            while True:
+                try:
+                    command = command_queue.get_nowait();
+                    dsair.send(command)
+                    print(command)
+                    time.sleep(0.1)
+                except queue.Empty:
+                    time.sleep(0.01)
+        except:
+            trace = traceback.format_exc()
+            print(trace, file=sys.stderr)
+            time.sleep(3)

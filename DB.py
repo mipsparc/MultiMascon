@@ -1,12 +1,17 @@
 #coding: utf-8
 
 import sqlite3
+import israspi
 
 class DB:
-    dbfile = 'multimascon.sqlite3'
+    if israspi.is_raspi:
+        dbfile = '/mnt/database/multimascon.sqlite3'
+    else:
+        dbfile = 'multimascon.sqlite3'
     
     @classmethod
     def getSpeedAccelCurveById(self, curve_group_id):
+        print(self.dbfile)
         con = sqlite3.connect(self.dbfile)
         cur = con.cursor()
         cur.execute('''
