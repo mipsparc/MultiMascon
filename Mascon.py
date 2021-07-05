@@ -12,16 +12,18 @@ class Mascon:
     fetched = False
     
     def fetchDatabase(self):
-        # TODO: SQLiteから取得する
-        # demo
-        self.ADDR = 4
-        # TODO: 設定画面などから取得
-        curve_group_id = 1
-        self.SPEED_OUTPUT_PROFILE = DB.getSpeedAccelCurveById(curve_group_id)
-        # demo 動き出す出力値(下駄を履かせる)
-        self.BASE_LEVEL = 85
-        # demo ライトファンクション番号
-        self.LIGHT_FUNC_NUM = 0
+        #TODO どうにかする
+        loco_id = 1
+        
+        self.loco = DB.getLocoById(loco_id)
+        self.ADDR = loco['address']
+        accel_curve_group_id = loco['accel_curve_group_id']
+        speed_curve_group_id = loco['speed_curve_group_id']
+        self.BASE_LEVEL = loco['base_level']
+        self.LIGHT_FUNC_ID = loco['light_func_id']
+        
+        self.SPEED_OUTPUT_PROFILE = DB.getSpeedOutputCurveById(speed_curve_group_id)
+        self.SPEED_ACCEL_PROFILE = DB.getSpeedAccelCurveById(accel_curve_group_id)
         
         self.fetched = True
 
@@ -33,12 +35,13 @@ class Mascon:
         
         way = self.way
         
+        # 方向転換
         if self.last_way != way:
             Command.setLocoDirection(command_queue, self.ADDR, way)
             if way == 0:
-                Command.setLocoFunction(command_queue, self.ADDR, self.LIGHT_FUNC_NUM, 0)
+                Command.setLocoFunction(command_queue, self.ADDR, self.LIGHT_FUNC_ID, 0)
             else:
-                Command.setLocoFunction(command_queue, self.ADDR, self.LIGHT_FUNC_NUM, 1)
+                Command.setLocoFunction(command_queue, self.ADDR, self.LIGHT_FUNC_ID, 1)
             self.last_way = way
         
         speed_level = self.getSpeedLevel()
@@ -48,14 +51,8 @@ class Mascon:
             
         # TODO 変化のあったボタンを取得して、ファンクションを動作させたりする
        
-    def getSpeedLevel(self):
-        # TODO この部分も管理画面から弄れるようにする
-        if self.kph < 30.0:
-            accel_level = self.accel_knotch * 0.3
-        elif self.kph < 50.0:
-            accel_level = self.accel_knotch * 0.2
-        else:
-            accel_level = self.accel_knotch * 0.1
+    def getSpeedLevel(self):         
+        accel_level = Smooth.getValue(self.kph, self.SPEED_ACCEL_PROFILE)
         
         brake_level = self.brake_knotch * 0.5
         self.kph = self.kph + accel_level - brake_level

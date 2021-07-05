@@ -24,6 +24,8 @@ root@DesktopStation:~# sudo vim /etc/dnsmasq.conf
 root@DesktopStation:~# sudo /etc/init.d/dnsmasq restart
 
 手元試験コマンド
+cd /home/mipsparc/Dropbox/python
+export FLASK_APP=/home/mipsparc/Dropbox/python/mm_web/main.py
 flask run --reload
 
 出荷書き込みイメージ作成時は、

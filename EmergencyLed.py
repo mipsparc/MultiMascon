@@ -3,9 +3,9 @@
 # 異常時にLEDを点灯したままプログラムを終了させるためのゾンビプログラム
 
 import time
-from gpiozero import LED
 
 def Worker():
+    from gpiozero import LED
     led = LED(15);
     led.on();
     while True:

@@ -16,6 +16,7 @@ import pygame
 from Command import Command
 import israspi
 import EmergencyLed
+import pathlib
 
 # Pygameをヘッドレスでも動かせるように対策
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
@@ -23,20 +24,28 @@ os.environ['SDL_VIDEODRIVER'] = 'dummy'
 excludes = sys.argv[1:]
 # ex) python3 main.py log dsair
 
-# TODO databaseディレクトリにログを記録する
 # TODO ログをWebUIから見れるようにする
 # 標準エラー出力をログファイルにする
 if not 'log' in excludes:
-    LOG_DIR = 'log'
+    if israspi.is_raspi:
+        LOG_DIR = '/mnt/database/log/'
+    else:
+        LOG_DIR = './log/'
     os.makedirs(LOG_DIR, exist_ok=True)
-    sys.stderr = open(LOG_DIR + '/' + str(int(time.time())) + '.txt', 'w')
+    last_log_files = [str(p) for p in pathlib.Path(LOG_DIR).iterdir()]
+    if last_log_files == []:
+        last_log_filenum = 0
+    else:
+        last_log_files.sort()
+        last_log_filenum = int(os.path.basename(last_log_files[-1]).split('.', 1)[0])
+    sys.stderr = open(LOG_DIR + '/' + str(last_log_filenum + 1) + '.txt', 'w')
     LogRotate.rotate(LOG_DIR)
     
 pygame.init()
 
 mascons = []
 # TODO demo code (本来はメインループで取得する)
-mascons.append(OHC_PC01A())
+#mascons.append(OHC_PC01A())
 
 command_queue = Queue()
 
@@ -45,10 +54,9 @@ if israspi.is_raspi:
     led = LED(15)
     led.on()
 
-# TODO 異常時などステータスを上位にshared memで伝達する
 # DSAirとの通信プロセスをつくる
 if not 'dsair' in excludes:
-    dsair_process = Process(target=DSAir2.Worker, args=(command_queue))
+    dsair_process = Process(target=DSAir2.Worker, args=(command_queue,))
     # 親プロセスが死んだら自動的に終了
     dsair_process.daemon = True
     dsair_process.start()
@@ -96,7 +104,7 @@ while True:
             pass
         
         if israspi.is_raspi:
-            if time.time() % 1 > 0.5:
+            if time.time() % 2 > 1.0:
                 led.on()
             else:
                 led.off()
@@ -105,10 +113,11 @@ while True:
         main_loop_time = time.time() - last_loop_time
         if main_loop_time > 0.1:
             print('main loop: ' + str(main_loop_time))
-        last_loop_time = time.time()
 
         #確実に一周がMAIN_LOOP時間とする
         time.sleep(max(MAIN_LOOP - main_loop_time, 0))
+        
+        last_loop_time = time.time()
     
     # 緊急停止時
     except:

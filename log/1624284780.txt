@@ -1,4 +1,0 @@
-Traceback (most recent call last):
-  File "main.py", line 26, in <module>
-    dsair_process = Process(target=DSAir2.Worker, args=(port, command_queue))
-NameError: name 'port' is not defined
