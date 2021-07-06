@@ -54,6 +54,8 @@ def Worker(command_queue):
                     time.sleep(0.1)
                 except queue.Empty:
                     time.sleep(0.01)
+        except IndexError:
+            time.sleep(3)
         except:
             trace = traceback.format_exc()
             print(trace, file=sys.stderr)

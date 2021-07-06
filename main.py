@@ -15,8 +15,8 @@ from DENSYA_CON_T01 import DENSYA_CON_T01
 import pygame
 from Command import Command
 import israspi
-import EmergencyLed
 import pathlib
+from subprocess import Popen
 
 # Pygameをヘッドレスでも動かせるように対策
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
@@ -124,8 +124,8 @@ while True:
         # 点灯しっぱなしは異常という考え方
         if israspi.is_raspi:
             led.close()
-            emg_led_process = Process(target=EmergencyLed.Worker)
-            emg_led_process.start()
+            emg_path = os.path.dirname(__file__) + 'EmergencyLed.py'
+            Popen(f'sleep 1; python3 {emg_path}', shell=True)
 
         while True:
             try:
