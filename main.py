@@ -73,8 +73,8 @@ last_usb_check = 0
 MAIN_LOOP = 0.5
 
 print('起動完了')
-while True:
-    try:
+try:
+    while True:
         if not 'dsair' in excludes and not dsair_process.is_alive():
             raise ValueError('DSAir2プロセスが起動していません')
         
@@ -119,23 +119,30 @@ while True:
         
         last_loop_time = time.time()
     
-    # 緊急停止時
-    except:
-        # 点灯しっぱなしは異常という考え方
-        if israspi.is_raspi:
-            led.close()
-            emg_path = os.path.dirname(__file__) + 'EmergencyLed.py'
-            Popen(f'sleep 1; python3 {emg_path}', shell=True)
-
-        while True:
-            try:
-                command_queue.get_nowait()
-            except queue.Empty:
-                break
+except KeyboardInterrupt:
+    is_no_problem = True
+    
+# 緊急停止時
+except:
+    # 点灯しっぱなしは異常という考え方
+    if israspi.is_raspi:
+        led.close()
+        emg_path = os.path.dirname(__file__) + '/EmergencyLed.py'
+        Popen(f'sleep 1; python3 {emg_path}', shell=True)
         
-        Command.reset(command_queue)
-        time.sleep(0.5)
-        if not 'dsair' in excludes:
-            dsair_process.kill()
-
+finally:
+    while True:
+        try:
+            command_queue.get_nowait()
+        except queue.Empty:
+            break
+    
+    Command.reset(command_queue)
+    time.sleep(0.5)
+    if not 'dsair' in excludes:
+        dsair_process.kill()
+        
+    if is_no_problem:
+        exit()
+    else:
         raise
