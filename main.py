@@ -73,6 +73,7 @@ last_usb_check = 0
 MAIN_LOOP = 0.5
 
 print('起動完了')
+print('起動完了', file=sys.stderr)
 try:
     while True:
         if not 'dsair' in excludes and not dsair_process.is_alive():
@@ -124,7 +125,7 @@ except KeyboardInterrupt:
     
 # 緊急停止時
 except:
-    # 点灯しっぱなしは異常という考え方
+    # 高速点滅は異常
     if israspi.is_raspi:
         led.close()
         emg_path = os.path.dirname(__file__) + '/EmergencyLed.py'
