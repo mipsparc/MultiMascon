@@ -12,6 +12,6 @@ def getValue(value, profile):
             # 1次関数を求める
             tilt = (p[1] - profile[i-1][1]) / (p[0] - profile[i-1][0])
             b = p[1] - tilt * p[0]
-            output = int(tilt * value + b)
+            output = tilt * value + b
             return output
     return profile[i]

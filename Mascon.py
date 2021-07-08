@@ -15,7 +15,7 @@ class Mascon:
         #TODO どうにかする
         loco_id = 1
         
-        self.loco = DB.getLocoById(loco_id)
+        loco = DB.getLocoById(loco_id)
         self.ADDR = loco['address']
         accel_curve_group_id = loco['accel_curve_group_id']
         speed_curve_group_id = loco['speed_curve_group_id']
@@ -37,6 +37,8 @@ class Mascon:
         
         # 方向転換
         if self.last_way != way:
+            Command.setLocoFunction(command_queue, self.ADDR, self.LIGHT_FUNC_ID, 1)
+            Command.setLocoFunction(command_queue, self.ADDR, self.LIGHT_FUNC_ID, 0)
             Command.setLocoDirection(command_queue, self.ADDR, way)
             if way == 0:
                 Command.setLocoFunction(command_queue, self.ADDR, self.LIGHT_FUNC_ID, 0)
@@ -48,20 +50,20 @@ class Mascon:
         if self.last_speed_level != speed_level:
             Command.setLocoSpeed(command_queue, self.ADDR, speed_level)
             self.last_speed_level = speed_level
+            print(speed_level)
             
         # TODO 変化のあったボタンを取得して、ファンクションを動作させたりする
        
-    def getSpeedLevel(self):         
+    def getSpeedLevel(self):
         accel_level = Smooth.getValue(self.kph, self.SPEED_ACCEL_PROFILE)
+        print(f'accel: {accel_level}')
         
         brake_level = self.brake_knotch * 0.5
-        self.kph = self.kph + accel_level - brake_level
-
-        # 走行抵抗
-        self.kph -= 0.05
+        self.kph = max(0, self.kph + (self.kph * (accel_level / 5.0) * self.accel_knotch) - brake_level)
+        if brake_level == 0 and self.accel_knotch > 0 and self.kph < 1:
+            self.kph = 1
         
-        if self.kph < 0:
-            self.kph = 0
+        print(f'kph: {self.kph}')
         speed_level = Smooth.getValue(self.kph, self.SPEED_OUTPUT_PROFILE)
         
         if speed_level > 0:

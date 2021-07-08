@@ -23,12 +23,13 @@ class DSAir2:
         if (not init_response.decode('ascii').endswith('200 Ok\r\n')
             and not init_response.decode('ascii').endswith('100 Ready\r\n')
         ):
-            print('DSair2を正常に認識できませんでした。終了します')
-            raise ValueError('DSair2認識エラー')
+            print('DSairを正常に認識できませんでした')
+            raise IndexError
         else:
             print('DSair2を正常に認識しました。')
 
     def send(self, value):
+        print(value)
         self.ser.write(value.encode('ascii') + b'\n')
         self.ser.flush()
         
@@ -36,8 +37,7 @@ class DSAir2:
         self.send('reset()')
         
     def read(self):
-        self.ser.readline()
-        self.ser.reset_input_buffer()
+        return self.ser.read(200)
 
 # 簡単に落ちないように、どんなエラーが出ても一定時間待って再確立を試みる
 def Worker(command_queue):
@@ -50,7 +50,6 @@ def Worker(command_queue):
                 try:
                     command = command_queue.get_nowait();
                     dsair.send(command)
-                    print(command)
                     time.sleep(0.1)
                 except queue.Empty:
                     time.sleep(0.01)

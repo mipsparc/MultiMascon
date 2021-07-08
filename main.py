@@ -21,6 +21,8 @@ from subprocess import Popen
 # Pygameをヘッドレスでも動かせるように対策
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
 
+is_no_problem = False
+
 excludes = sys.argv[1:]
 # ex) python3 main.py log dsair
 
@@ -45,7 +47,7 @@ pygame.init()
 
 mascons = []
 # TODO demo code (本来はメインループで取得する)
-#mascons.append(OHC_PC01A())
+mascons.append(DENSYA_CON_T01())
 
 command_queue = Queue()
 
@@ -77,13 +79,13 @@ print('起動完了', file=sys.stderr)
 try:
     while True:
         if not 'dsair' in excludes and not dsair_process.is_alive():
-            raise ValueError('DSAir2プロセスが起動していません')
+            raise RuntimeError('DSAir2プロセスが起動していません')
         
         # 5個以上積み上がったコマンドは飛ばす
-        for i in range(min(command_queue.qsize() - 5, 0)):
+        for i in range(max(command_queue.qsize() - 5, 0)):
+            print('キューから溢れました', file=sys.stderr)
             try:
                 command_queue.get_nowait()
-                print('dropped queue')
             except queue.Empty:
                 break
         
@@ -124,14 +126,13 @@ except KeyboardInterrupt:
     is_no_problem = True
     
 # 緊急停止時
-except:
+finally:
     # 高速点滅は異常
     if israspi.is_raspi:
         led.close()
         emg_path = os.path.dirname(__file__) + '/EmergencyLed.py'
         Popen(f'sleep 1; python3 {emg_path}', shell=True)
-        
-finally:
+
     while True:
         try:
             command_queue.get_nowait()

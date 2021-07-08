@@ -21,10 +21,7 @@ class DENSYA_CON_T01(Mascon):
             self.device = device
             break
                 
-    def loadStatus(self):
-        #TODO ボタン操作で方向転換
-        self.way = 1
-        
+    def loadStatus(self):       
         # 3回試行する
         for i in range(3):
             try:
@@ -36,8 +33,16 @@ class DENSYA_CON_T01(Mascon):
                     self.accel_knotch = self.MC_LEVEL[MC]
                 self.pedal = PD == 0xFF
                 
-                # TODO: 十字キー、その他ボタンは後で実装
-            
+                # TODO: その他ボタンは後で実装、DBベースで
+                # 左ボタンで前進
+                if HT == 0x06:
+                    self.way = 1
+                # 右ボタンで後進
+                elif HT == 0x02:
+                    self.way = 2
+                # 上下ボタンで切
+                elif HT == 0x00 or HT == 0x04:
+                    self.way = 0
             except KeyError:
                 pass
             
