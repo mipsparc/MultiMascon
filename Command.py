@@ -3,8 +3,9 @@
 import time
 
 class Command:
-    # 49152を車両アドレスに足したものをDSAir2に送信する
-    LOCO_DEFAULT_ADDR = 49152
+    # 基底アドレスを車両アドレスに足したものをDSAir2に送信する
+    LOCO_DEFAULT_ADDR = 0xC000
+    ACCESSORY_DEFAULT_ADDR = 0x3800 - 1
     
     @classmethod
     def setLocoFunction(self, command_queue, loco_addr, func_num, value):
@@ -45,6 +46,10 @@ class Command:
     @classmethod
     def reset(self, command_queue):
         command_queue.put('reset()')
+        
+    @classmethod
+    def setTurnout(self, command_queue, addr, direction):
+        command_queue.put(f'setTurnout({self.ACCESSORY_DEFAULT_ADDR + addr},{direction})')
     
     # DC駆動用
     #@classmethod

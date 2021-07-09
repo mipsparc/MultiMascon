@@ -14,12 +14,14 @@ class DENSYA_CON_T01(Mascon):
     MC_LEVEL = {0x81: 0, 0x6D: 1, 0x54: 2, 0x3F: 3, 0x21: 4, 0x00: 5}
     way = 0
             
-    def __init__(self):
+    def __init__(self, loco_id):
         devices = usb.core.find(find_all=True, idVendor=0x0ae4, idProduct=0x0004)
         # TODO 複数から選択できるようにする
         for device in devices:
             self.device = device
             break
+        
+        self.loco_id = loco_id
                 
     def loadStatus(self):       
         # 3回試行する
@@ -33,7 +35,7 @@ class DENSYA_CON_T01(Mascon):
                     self.accel_knotch = self.MC_LEVEL[MC]
                 self.pedal = PD == 0xFF
                 
-                # TODO: その他ボタンは後で実装、DBベースで
+                # TODO: 後で再度実装、DBベースで
                 # 左ボタンで前進
                 if HT == 0x06:
                     self.way = 1

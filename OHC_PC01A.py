@@ -7,7 +7,8 @@ import time
 from Mascon import Mascon
 
 class OHC_PC01A(Mascon):
-    def __init__(self):
+    def __init__(self, loco_id):
+        self.loco_id = loco_id
         pygame.joystick.init()
         self.joy = pygame.joystick.Joystick(0)
         self.joy.init()

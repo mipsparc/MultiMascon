@@ -12,10 +12,7 @@ class Mascon:
     fetched = False
     
     def fetchDatabase(self):
-        #TODO どうにかする
-        loco_id = 1
-        
-        loco = DB.getLocoById(loco_id)
+        loco = DB.getLocoById(self.loco_id)
         self.ADDR = loco['address']
         accel_curve_group_id = loco['accel_curve_group_id']
         speed_curve_group_id = loco['speed_curve_group_id']
@@ -53,6 +50,14 @@ class Mascon:
             print(speed_level)
             
         # TODO 変化のあったボタンを取得して、ファンクションを動作させたりする
+        # TODO デモ用コード
+        try:
+            if self.white:
+                Command.setTurnout(command_queue, 1, 0)
+            if self.yellow:
+                Command.setTurnout(command_queue, 1, 1)
+        except AttributeError:
+            pass
        
     def getSpeedLevel(self):
         accel_level = Smooth.getValue(self.kph, self.SPEED_ACCEL_PROFILE)

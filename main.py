@@ -43,11 +43,14 @@ if not 'log' in excludes:
     sys.stderr = open(LOG_DIR + '/' + str(last_log_filenum + 1) + '.txt', 'w')
     LogRotate.rotate(LOG_DIR)
     
+webui_fifo = os.open('/tmp/webui_namedpipe', os.O_RDONLY | os.O_NONBLOCK)
+
 pygame.init()
 
 mascons = []
 # TODO demo code (本来はメインループで取得する)
-mascons.append(DENSYA_CON_T01())
+mascons.append(DENSYA_CON_T01(1))
+mascons.append(OHC_PC01A(2))
 
 command_queue = Queue()
 
@@ -62,10 +65,8 @@ if not 'dsair' in excludes:
     # 親プロセスが死んだら自動的に終了
     dsair_process.daemon = True
     dsair_process.start()
-
-# DCCモード起動
-Command.switchToDCC(command_queue)
-time.sleep(1)
+    Command.switchToDCC(command_queue)
+    time.sleep(1)
 
 last_loop_time = time.time()
 last_db_check = 0
@@ -78,11 +79,22 @@ print('起動完了')
 print('起動完了', file=sys.stderr)
 try:
     while True:
+        # namedpipeから情報を受領
+        # DCCモード再起動
+        webui_msg = os.read(webui_fifo, 30).decode()
+        print(webui_msg)
+        # ソフト再起動
+        if 'softreset' in webui_msg:
+            print('ソフトリセットを実施')
+            print('ソフトリセットを実施', file=sys.stderr)
+            Popen(f'sleep 5; python3 {__file__}', shell=True)
+            raise KeyboardInterrupt
+        
         if not 'dsair' in excludes and not dsair_process.is_alive():
             raise RuntimeError('DSAir2プロセスが起動していません')
         
-        # 5個以上積み上がったコマンドは飛ばす
-        for i in range(max(command_queue.qsize() - 5, 0)):
+        # 10個以上積み上がったコマンドは飛ばす
+        for i in range(max(command_queue.qsize() - 10, 0)):
             print('キューから溢れました', file=sys.stderr)
             try:
                 command_queue.get_nowait()
@@ -128,7 +140,7 @@ except KeyboardInterrupt:
 # 緊急停止時
 finally:
     # 高速点滅は異常
-    if israspi.is_raspi:
+    if israspi.is_raspi and not is_no_problem:
         led.close()
         emg_path = os.path.dirname(__file__) + '/EmergencyLed.py'
         Popen(f'sleep 1; python3 {emg_path}', shell=True)
