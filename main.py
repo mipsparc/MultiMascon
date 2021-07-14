@@ -34,27 +34,25 @@ if not 'log' in excludes:
     else:
         LOG_DIR = './log/'
     os.makedirs(LOG_DIR, exist_ok=True)
-    last_log_files = [str(p) for p in pathlib.Path(LOG_DIR).iterdir()]
-    if last_log_files == []:
+    last_log_filenums = [int(p.stem) for p in pathlib.Path(LOG_DIR).iterdir()]
+    if last_log_filenums == []:
         last_log_filenum = 0
     else:
-        last_log_files.sort()
-        last_log_filenum = int(os.path.basename(last_log_files[-1]).split('.', 1)[0])
-    sys.stderr = open(LOG_DIR + '/' + str(last_log_filenum + 1) + '.txt', 'w')
+        log_filenum = max(last_log_filenums) + 1
+    sys.stderr = open(LOG_DIR + '/' + str(log_filenum) + '.txt', 'w')
     LogRotate.rotate(LOG_DIR)
     
-webui_fifo = os.open('/tmp/webui_namedpipe', os.O_RDONLY | os.O_NONBLOCK)
+#webui_fifo = os.open('/tmp/webui_namedpipe', os.O_RDONLY | os.O_NONBLOCK)
 
 pygame.init()
 
 mascons = []
-# TODO demo code (本来はメインループで取得する)
-mascons.append(DENSYA_CON_T01(1))
-mascons.append(OHC_PC01A(2))
 
 command_queue = Queue()
 
 if israspi.is_raspi:
+    # 前回の異常終了警告プロセスがあったら止める
+    Popen('pkill -f "EmergencyLed"', shell=True)
     from gpiozero import LED
     led = LED(15)
     led.on()
@@ -81,14 +79,14 @@ try:
     while True:
         # namedpipeから情報を受領
         # DCCモード再起動
-        webui_msg = os.read(webui_fifo, 30).decode()
-        print(webui_msg)
-        # ソフト再起動
-        if 'softreset' in webui_msg:
-            print('ソフトリセットを実施')
-            print('ソフトリセットを実施', file=sys.stderr)
-            Popen(f'sleep 5; python3 {__file__}', shell=True)
-            raise KeyboardInterrupt
+        #webui_msg = os.read(webui_fifo, 30).decode()
+        #print(webui_msg)
+        ## ソフト再起動
+        #if 'softreset' in webui_msg:
+            #print('ソフトリセットを実施')
+            #print('ソフトリセットを実施', file=sys.stderr)
+            #Popen(f'sleep 5; python3 {__file__}', shell=True)
+            #raise KeyboardInterrupt
         
         if not 'dsair' in excludes and not dsair_process.is_alive():
             raise RuntimeError('DSAir2プロセスが起動していません')

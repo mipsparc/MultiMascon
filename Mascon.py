@@ -3,6 +3,7 @@
 import Smooth
 from Command import Command
 from DB import DB
+import time
 
 class Mascon:
     kph = 0
@@ -10,6 +11,9 @@ class Mascon:
     last_way = 0
     # DBから初回情報取得済みかどうか
     fetched = False
+    
+    turnout_state = 0
+    last_turnout_rerun = time.time()
     
     def fetchDatabase(self):
         loco = DB.getLocoById(self.loco_id)
@@ -50,15 +54,22 @@ class Mascon:
             print(speed_level)
             
         # TODO 変化のあったボタンを取得して、ファンクションを動作させたりする
-        # TODO デモ用コード
         try:
             if self.white:
-                Command.setTurnout(command_queue, 1, 0)
-            if self.yellow:
-                Command.setTurnout(command_queue, 1, 1)
+                self.turnout_state = 0
+                Command.setTurnout(command_queue, 1, self.turnout_state)
+            elif self.yellow:
+                self.turnout_state = 1
+                Command.setTurnout(command_queue, 1, self.turnout_state)
+                
+            # 定期的にポイントマシンを再駆動してガタを解決する
+            if (time.time() - self.last_turnout_rerun) > 3.0:
+                # TODO デモ用番号
+                Command.setTurnout(command_queue, 1, self.turnout_state)
+                self.last_turnout_rerun = time.time()
         except AttributeError:
             pass
-       
+
     def getSpeedLevel(self):
         accel_level = Smooth.getValue(self.kph, self.SPEED_ACCEL_PROFILE)
         print(f'accel: {accel_level}')
