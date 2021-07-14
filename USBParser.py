@@ -14,12 +14,24 @@ def convertUSBPathToPos(devpath):
     
     return path
 
+# サンイン重工ワンハンドルマスコンを取得する
 def list_OHC_PC01A():
     context = pyudev.Context()
     
     positions = []
     for device in context.list_devices(subsystem='input'):
-        if '0079:0006' in device.sys_path:
+        if device.attributes.get('idVendor') == b'0079' and device.attributes.get('idProduct') == b'0006':
+            positions.append(convertUSBPathToPos(device.sys_path))
+    
+    print(list(set(positions)))
+
+# タイトー 電車でGO! コントローラType2 PS2 (USB接続) を取得する
+def list_DENSYA_CON_T01():
+    context = pyudev.Context()
+    
+    positions = []
+    for device in context.list_devices(subsystem='usb'):
+        if device.attributes.get('idVendor') == b'0ae4' and device.attributes.get('idProduct') == b'0004':
             positions.append(convertUSBPathToPos(device.sys_path))
     
     print(list(set(positions)))
