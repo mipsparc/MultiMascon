@@ -41,8 +41,6 @@ if not 'log' in excludes:
         log_filenum = max(last_log_filenums) + 1
     sys.stderr = open(LOG_DIR + '/' + str(log_filenum) + '.txt', 'w')
     LogRotate.rotate(LOG_DIR)
-    
-#webui_fifo = os.open('/tmp/webui_namedpipe', os.O_RDONLY | os.O_NONBLOCK)
 
 pygame.init()
 
@@ -76,18 +74,7 @@ MAIN_LOOP = 0.5
 print('起動完了')
 print('起動完了', file=sys.stderr)
 try:
-    while True:
-        # namedpipeから情報を受領
-        # DCCモード再起動
-        #webui_msg = os.read(webui_fifo, 30).decode()
-        #print(webui_msg)
-        ## ソフト再起動
-        #if 'softreset' in webui_msg:
-            #print('ソフトリセットを実施')
-            #print('ソフトリセットを実施', file=sys.stderr)
-            #Popen(f'sleep 5; python3 {__file__}', shell=True)
-            #raise KeyboardInterrupt
-        
+    while True:        
         if not 'dsair' in excludes and not dsair_process.is_alive():
             raise RuntimeError('DSAir2プロセスが起動していません')
         
