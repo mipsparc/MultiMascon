@@ -54,21 +54,21 @@ class Mascon:
             print(speed_level)
             
         # TODO 変化のあったボタンを取得して、ファンクションを動作させたりする
-        try:
-            if self.white:
-                self.turnout_state = 0
-                Command.setTurnout(command_queue, 1, self.turnout_state)
-            elif self.yellow:
-                self.turnout_state = 1
-                Command.setTurnout(command_queue, 1, self.turnout_state)
+        #try:
+            #if self.white:
+                #self.turnout_state = 0
+                #Command.setTurnout(command_queue, 1, self.turnout_state)
+            #elif self.yellow:
+                #self.turnout_state = 1
+                #Command.setTurnout(command_queue, 1, self.turnout_state)
                 
-            # 定期的にポイントマシンを再駆動してガタを解決する
-            if (time.time() - self.last_turnout_rerun) > 3.0:
-                # TODO デモ用番号
-                Command.setTurnout(command_queue, 1, self.turnout_state)
-                self.last_turnout_rerun = time.time()
-        except AttributeError:
-            pass
+            ## 定期的にポイントマシンを再駆動してガタを解決する
+            #if (time.time() - self.last_turnout_rerun) > 3.0:
+                ## デモ用番号
+                #Command.setTurnout(command_queue, 1, self.turnout_state)
+                #self.last_turnout_rerun = time.time()
+        #except AttributeError:
+            #pass
 
     def getSpeedLevel(self):
         accel_level = Smooth.getValue(self.kph, self.SPEED_ACCEL_PROFILE)

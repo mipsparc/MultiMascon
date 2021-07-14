@@ -23,10 +23,10 @@ class DSAir2:
         if (not init_response.decode('ascii').endswith('200 Ok\r\n')
             and not init_response.decode('ascii').endswith('100 Ready\r\n')
         ):
-            print('DSairを正常に認識できませんでした')
+            print('DSairを正常に認識できませんでした', file=sys.stderr)
             raise IndexError
         else:
-            print('DSair2を正常に認識しました。')
+            print('DSair2を正常に認識しました。', file=sys.stderr)
 
     def send(self, value):
         print(value)

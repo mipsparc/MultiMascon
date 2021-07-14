@@ -10,6 +10,7 @@ class OHC_PC01A(Mascon):
     def __init__(self, loco_id):
         self.loco_id = loco_id
         pygame.joystick.init()
+        # TODO 選択可能に
         self.joy = pygame.joystick.Joystick(0)
         self.joy.init()
         pygame.event.get()
