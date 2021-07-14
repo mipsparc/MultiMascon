@@ -17,17 +17,46 @@ from Command import Command
 import israspi
 import pathlib
 from subprocess import Popen
+import logging
+import signal
+
+# 安全にプログラムを終了する
+def safe_halt(*args):
+    # 高速点滅は異常
+    if israspi.is_raspi and not is_no_problem:
+        led.close()
+        emg_path = os.path.dirname(__file__) + '/EmergencyLed.py'
+        Popen(f'sleep 1; python3 {emg_path}', shell=True)
+
+    # 残指令キューをすべて破棄する
+    while True:
+        try:
+            command_queue.get_nowait()
+        except queue.Empty:
+            break
+    
+    # DSAirをリセットしてすべての列車を停止する
+    Command.reset(command_queue)
+    time.sleep(0.5)
+    if not 'dsair' in excludes:
+        dsair_process.kill()
+
+    if is_no_problem:
+        logger.info('正常終了しました')
+        exit()
+    else:
+        raise e
 
 # Pygameをヘッドレスでも動かせるように対策
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
 
-is_no_problem = False
+# 正常終了であればTrue
+is_no_problem = True
 
 excludes = sys.argv[1:]
 # ex) python3 main.py log dsair
 
-# TODO ログをWebUIから見れるようにする
-# 標準エラー出力をログファイルにする
+logger = logging.getLogger(__name__)
 if not 'log' in excludes:
     if israspi.is_raspi:
         LOG_DIR = '/mnt/database/log/'
@@ -36,11 +65,14 @@ if not 'log' in excludes:
     os.makedirs(LOG_DIR, exist_ok=True)
     last_log_filenums = [int(p.stem) for p in pathlib.Path(LOG_DIR).iterdir()]
     if last_log_filenums == []:
-        last_log_filenum = 0
+        log_filenum = 1
     else:
         log_filenum = max(last_log_filenums) + 1
-    sys.stderr = open(LOG_DIR + '/' + str(log_filenum) + '.txt', 'w')
+        
+    logging.basicConfig(filename=LOG_DIR + f'/{log_filenum}.txt', level=logging.INFO)
     LogRotate.rotate(LOG_DIR)
+
+signal.signal(signal.SIGTERM, safe_halt)
 
 pygame.init()
 
@@ -57,7 +89,7 @@ if israspi.is_raspi:
 
 # DSAirとの通信プロセスをつくる
 if not 'dsair' in excludes:
-    dsair_process = Process(target=DSAir2.Worker, args=(command_queue,))
+    dsair_process = Process(target=DSAir2.Worker, args=(command_queue, logger))
     # 親プロセスが死んだら自動的に終了
     dsair_process.daemon = True
     dsair_process.start()
@@ -67,20 +99,21 @@ if not 'dsair' in excludes:
 last_loop_time = time.time()
 last_db_check = 0
 last_usb_check = 0
+last_ping_check = time.time()
 
 # メインループは送信の余裕を持って0.5秒で回す
 MAIN_LOOP = 0.5
 
-print('起動完了')
-print('起動完了', file=sys.stderr)
+logger.info('起動完了')
 try:
     while True:        
         if not 'dsair' in excludes and not dsair_process.is_alive():
-            raise RuntimeError('DSAir2プロセスが起動していません')
+            logger.error('DSAir2プロセスが終了しています')
+            raise RuntimeError('DSAir2プロセスが終了しています')
         
         # 10個以上積み上がったコマンドは飛ばす
         for i in range(max(command_queue.qsize() - 10, 0)):
-            print('キューから溢れました', file=sys.stderr)
+            logger.error('コマンドキューが溢れました')
             try:
                 command_queue.get_nowait()
             except queue.Empty:
@@ -97,11 +130,15 @@ try:
                 mascon.fetchDatabase()
             last_db_check = time.time()
         
-        # 1秒に一回pyusbで接続・抜取情報を取得する
+        # 1秒に1回pyusbで接続・抜取情報を取得する
         if (time.time() - last_usb_check) > 1.0:
             #TODO: pyusbで情報取得してmasconsに入れたり抜いたりする
             last_usb_check = time.time()
-            pass
+        
+        # 5秒に1回、なにもなくてもDSAirとの接続を検証する
+        if (time.time() - last_ping_check) > 5.0:
+            Command.setPing(command_queue)
+            last_ping_check = time.time()
         
         if israspi.is_raspi:
             if time.time() % 2 > 1.0:
@@ -111,8 +148,8 @@ try:
 
         # メインループにかかった時間(開発用)
         main_loop_time = time.time() - last_loop_time
-        if main_loop_time > 0.1:
-            print('main loop: ' + str(main_loop_time))
+        if main_loop_time > 0.4:
+            logger.warning('main loop: ' + str(main_loop_time))
 
         #確実に一周がMAIN_LOOP時間とする
         time.sleep(max(MAIN_LOOP - main_loop_time, 0))
@@ -120,28 +157,11 @@ try:
         last_loop_time = time.time()
     
 except KeyboardInterrupt:
-    is_no_problem = True
-    
-# 緊急停止時
-finally:
-    # 高速点滅は異常
-    if israspi.is_raspi and not is_no_problem:
-        led.close()
-        emg_path = os.path.dirname(__file__) + '/EmergencyLed.py'
-        Popen(f'sleep 1; python3 {emg_path}', shell=True)
+    pass
 
-    while True:
-        try:
-            command_queue.get_nowait()
-        except queue.Empty:
-            break
-    
-    Command.reset(command_queue)
-    time.sleep(0.5)
-    if not 'dsair' in excludes:
-        dsair_process.kill()
-        
-    if is_no_problem:
-        exit()
-    else:
-        raise
+except Exception as e:
+    is_no_problem = False
+
+# 正常・異常終了時
+finally:
+    safe_halt()

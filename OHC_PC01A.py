@@ -5,6 +5,7 @@
 import pygame
 import time
 from Mascon import Mascon
+import logging
 
 class OHC_PC01A(Mascon):
     def __init__(self, loco_id):
@@ -52,9 +53,9 @@ class OHC_PC01A(Mascon):
 
     # 主幹制御器全体の状態を返す
     def loadStatus(self):
+        # TODO: 接続切れたら当該列車は停止して、全体はそのまま生きる
         pygame.event.get()
         
-        # TODO: 接続切れたら当該列車は停止して、全体はそのまま生きる
         accel_knotch, brake_knotch = self.convertPosToAccelBrake([
             self.joy.get_button(6),
             self.joy.get_button(7),

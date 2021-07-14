@@ -2,6 +2,7 @@
 
 import sqlite3
 import israspi
+import logging
 
 class DB:
     if israspi.is_raspi:

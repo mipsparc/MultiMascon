@@ -5,12 +5,12 @@
 import serial
 import time
 import queue
-import traceback
 import sys
 import glob
+import logging
 
 class DSAir2:   
-    def __init__(self, port):
+    def __init__(self, port, logger):
         self.ser = serial.Serial(port, baudrate=115200, timeout=0.2, write_timeout=0.2, inter_byte_timeout=0.1)
         # DSair2を再起動
         self.reset()
@@ -23,10 +23,10 @@ class DSAir2:
         if (not init_response.decode('ascii').endswith('200 Ok\r\n')
             and not init_response.decode('ascii').endswith('100 Ready\r\n')
         ):
-            print('DSairを正常に認識できませんでした', file=sys.stderr)
+            logger.error('DSAirを正常に認識できませんでした')
             raise IndexError
         else:
-            print('DSair2を正常に認識しました。', file=sys.stderr)
+            logger.info('DSAirを正常に認識しました')
 
     def send(self, value):
         print(value)
@@ -40,12 +40,12 @@ class DSAir2:
         return self.ser.read(200)
 
 # 簡単に落ちないように、どんなエラーが出ても一定時間待って再確立を試みる
-def Worker(command_queue):
+def Worker(command_queue, logger):
     while True:
         try:
             # ttyUSB1になることもあるので
             port = glob.glob('/dev/ttyUSB*')[0]
-            dsair = DSAir2(port)
+            dsair = DSAir2(port, logger)
             while True:
                 try:
                     command = command_queue.get_nowait();
@@ -55,7 +55,6 @@ def Worker(command_queue):
                     time.sleep(0.01)
         except IndexError:
             time.sleep(3)
-        except:
-            trace = traceback.format_exc()
-            print(trace, file=sys.stderr)
+        except Exception as e:
+            logger.exception('DSAirとの接続に失敗しました')
             time.sleep(3)

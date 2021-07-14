@@ -4,6 +4,7 @@ import Smooth
 from Command import Command
 from DB import DB
 import time
+import logging
 
 class Mascon:
     kph = 0

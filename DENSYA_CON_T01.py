@@ -5,6 +5,7 @@
 import usb.core
 import usb.util
 from Mascon import Mascon
+import logging
 
 class DENSYA_CON_T01(Mascon):
     
