@@ -97,11 +97,12 @@ if not 'dsair' in excludes:
     Command.switchToDCC(command_queue)
     time.sleep(1)
 
+USBParser.startMasconMonitor()
+
 last_loop_time = time.time()
 last_db_check = 0
 last_usb_check = 0
 last_ping_check = time.time()
-last_mascon_ports = {}
 
 # メインループは送信の余裕を持って0.5秒で回す
 MAIN_LOOP = 0.5
@@ -132,26 +133,9 @@ try:
                 mascon.fetchDatabase()
             last_db_check = time.time()
         
-        # 1秒に1回pyusbで接続・抜取情報を取得する
-        if (time.time() - last_usb_check) > 1.0:
-            mascon_ports = USBParser.listMascon()
-            for mascon_name, mascon_port in mascon_ports.items():
-                try:
-                    mascon_diff = set(last_mascon_ports[mascon_name]) - mascon_port
-                    mascon_diff += mascon_port - set(last_mascon_ports[mascon_name])
-                except KeyError:
-                    mascon_diff = mascon_port
-                    
-                for port in mascon_diff:
-                    loco_id = DB.getLocoIdByMasconPos(port)
-                    if mascon_name == 'OHC_PC01A':
-                        mascon.append(OHC_PC01A(loco_id))
-                    elif mascon_name == 'DENSYA_CON_T01':
-                        mascon.append(DENSYA_CON_T01(loco_id))
-                    else:
-                        raise RuntimeError('未知のマスコンです')
-            
-            last_mascon_ports = mascon_ports
+        # 3秒に1回pyusbで接続・抜取情報を取得する
+        if (time.time() - last_usb_check) > 3.0:
+
             last_usb_check = time.time()
         
         # 5秒に1回、なにもなくてもDSAirとの接続を検証する
