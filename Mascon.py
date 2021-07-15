@@ -13,8 +13,8 @@ class Mascon:
     # DBから初回情報取得済みかどうか
     fetched = False
     
-    turnout_state = 0
-    last_turnout_rerun = time.time()
+    #turnout_state = 0
+    #last_turnout_rerun = time.time()
     
     def fetchDatabase(self):
         loco = DB.getLocoById(self.loco_id)

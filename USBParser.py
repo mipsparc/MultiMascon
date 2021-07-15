@@ -14,24 +14,21 @@ def convertUSBPathToPos(devpath):
     
     return path
 
-# サンイン重工ワンハンドルマスコンを取得する
-def list_OHC_PC01A():
+def listMascons():
     context = pyudev.Context()
     
-    positions = []
-    for device in context.list_devices(subsystem='input'):
-        if device.attributes.get('idVendor') == b'0079' and device.attributes.get('idProduct') == b'0006':
-            positions.append(convertUSBPathToPos(device.sys_path))
-    
-    print(list(set(positions)))
-
-# タイトー 電車でGO! コントローラType2 PS2 (USB接続) を取得する
-def list_DENSYA_CON_T01():
-    context = pyudev.Context()
-    
-    positions = []
+    # サンイン重工ワンハンドルマスコン
+    OHC_PC01A = []
+    # タイトー 電車でGO! コントローラType2 PS2 (USB接続)
+    DENSYA_CON_T01 = []
     for device in context.list_devices(subsystem='usb'):
+        if device.attributes.get('idVendor') == b'0079' and device.attributes.get('idProduct') == b'0006':
+            OHC_PC01A.append(convertUSBPathToPos(device.sys_path))
         if device.attributes.get('idVendor') == b'0ae4' and device.attributes.get('idProduct') == b'0004':
-            positions.append(convertUSBPathToPos(device.sys_path))
+            DENSYA_CON_T01.append(convertUSBPathToPos(device.sys_path))
     
-    print(list(set(positions)))
+    # 重複排除
+    OHC_PC01A = set(OHC_PC01A)
+    DENSYA_CON_T01 = set(DENSYA_CON_T01)
+
+    return {'OHC_PC01A': OHC_PC01A, 'DENSYA_CON_T01': DENSYA_CON_T01}

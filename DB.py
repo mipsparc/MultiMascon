@@ -61,3 +61,17 @@ class DB:
         con.close()
         
         return profile
+    
+    @classmethod
+    def getLocoIdByMasconPos(self, mascon_pos):
+        con = sqlite3.connect(self.dbfile)
+        cur = con.cursor()
+        cur.execute('''
+            SELECT loco_id
+            FROM mascon_assign
+            WHERE mascon_pos = ?
+        ''', (mascon_pos,))
+        loco_profile = cur.fetchone()[0]
+        con.close()
+        
+        return loco_profile
