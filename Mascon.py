@@ -21,6 +21,9 @@ class Mascon:
             return
         
         loco = DB.getLocoById(self.loco_id)
+        # 存在しない車両番号の場合
+        if loco == None:
+            return
         self.ADDR = loco['address']
         accel_curve_group_id = loco['accel_curve_group_id']
         speed_curve_group_id = loco['speed_curve_group_id']
@@ -57,7 +60,7 @@ class Mascon:
         if self.last_speed_level != speed_level:
             Command.setLocoSpeed(command_queue, self.ADDR, speed_level)
             self.last_speed_level = speed_level
-            print(speed_level)
+            print(f'loco_id: {self.loco_id}, kph: {max(self.kph - 1, 0)}')
             
         # TODO 変化のあったボタンを取得して、ファンクションを動作させたりする
         #try:
@@ -93,9 +96,7 @@ class Mascon:
         if speed_level > 0:
             level = speed_level + self.BASE_LEVEL
             return level
-        
-        print(f'loco_id: {self.loco_id}, kph: {max(self.kph - 1, 0)}')
-                
+                        
         return 0
     
     def stop(self, command_queue):

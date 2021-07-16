@@ -57,7 +57,7 @@ class DB:
             FROM loco
             WHERE loco_id = ?
         ''', (str(loco_id)))
-        profile = cur.fetchall()[0]
+        profile = cur.fetchone()
         con.close()
         
         return profile
