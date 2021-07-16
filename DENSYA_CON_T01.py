@@ -13,6 +13,8 @@ class DENSYA_CON_T01(Mascon):
     accel_knotch = 0
     MC_LEVEL = {0x81: 0, 0x6D: 1, 0x54: 2, 0x3F: 3, 0x21: 4, 0x00: 5}
     way = 0
+    ACCEL_KNOTCH_NUM = 5
+    BRAKE_KNOTCH_NUM = 9
             
     def __init__(self, loco_id, bus, address):
         devices = usb.core.find(find_all=True, idVendor=0x0ae4, idProduct=0x0004)
