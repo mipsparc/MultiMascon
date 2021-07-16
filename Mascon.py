@@ -13,9 +13,6 @@ class Mascon:
     # DBから初回情報取得済みかどうか
     fetched = False
     
-    #turnout_state = 0
-    #last_turnout_rerun = time.time()
-    
     def fetchDatabase(self):
         if self.invalid == True:
             return
@@ -63,30 +60,15 @@ class Mascon:
             print(f'loco_id: {self.loco_id}, kph: {max(self.kph - 1, 0)}')
             
         # TODO 変化のあったボタンを取得して、ファンクションを動作させたりする
-        #try:
-            #if self.white:
-                #self.turnout_state = 0
-                #Command.setTurnout(command_queue, 1, self.turnout_state)
-            #elif self.yellow:
-                #self.turnout_state = 1
-                #Command.setTurnout(command_queue, 1, self.turnout_state)
-                
-            ## 定期的にポイントマシンを再駆動してガタを解決する
-            #if (time.time() - self.last_turnout_rerun) > 3.0:
-                ## デモ用番号
-                #Command.setTurnout(command_queue, 1, self.turnout_state)
-                #self.last_turnout_rerun = time.time()
-        #except AttributeError:
-            #pass
 
     def getSpeedLevel(self):
         if self.invalid:
             return 0
         
-        accel_level = Smooth.getValue(self.kph, self.SPEED_ACCEL_PROFILE)
+        accel_level = Smooth.getValue(self.kph, self.SPEED_ACCEL_PROFILE) * self.accel_knotch / self.ACCEL_KNOTCH_NUM
         
-        brake_level = (self.brake_knotch / self.BRAKE_KNOTCH_NUM) * 0.5
-        self.kph = max(0, self.kph + (self.kph * (accel_level / self.ACCEL_KNOTCH_NUM) * self.accel_knotch) - brake_level)
+        brake_level = (self.brake_knotch / self.BRAKE_KNOTCH_NUM) * 3.0
+        self.kph = max(0, self.kph + accel_level - brake_level)
 
         if brake_level == 0 and self.accel_knotch > 0 and self.kph < 1:
             self.kph = 1
