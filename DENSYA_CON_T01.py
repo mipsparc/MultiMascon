@@ -15,14 +15,16 @@ class DENSYA_CON_T01(Mascon):
     MC_LEVEL = {0x81: 0, 0x6D: 1, 0x54: 2, 0x3F: 3, 0x21: 4, 0x00: 5}
     way = 0
             
-    def __init__(self, loco_id):
+    def __init__(self, loco_id, bus, address):
         devices = usb.core.find(find_all=True, idVendor=0x0ae4, idProduct=0x0004)
-        # TODO 複数から選択できるようにする
         for device in devices:
-            self.device = device
-            break
+            if device.attributes.get('busnum') == bus and device.attributes.get('devnum') == address:
+                self.device = device
+                self.loco_id = loco_id
+                break
         
-        self.loco_id = loco_id
+        # 正しくアサインされたかの検査
+        self.device
                 
     def loadStatus(self):       
         # 3回試行する

@@ -5,6 +5,14 @@ import re
 trig_q = queue.Queue()
 
 class USBUtil:
+    # もともとつながっていたデバイスの追加を行う
+    @staticmethod
+    def init():
+        devices = usb.core.find(find_all=True)
+        for device in devices:
+            USBUtil.usbTrigger('add', device)
+    
+    # ポートごとにイベントをまとめる
     @staticmethod
     def sumUSBEvents():
         add_events = {}
@@ -29,25 +37,41 @@ class USBUtil:
             except queue.Empty:
                 break
         
-        p = re.compile(r'/js[0-9]$')
         
+        adds = []
+        removes = []
         for port in add_events:
-            joystick_num = None
-            for data in add_events[port]:
-                if data['bus'] is not None:
-                    bus = int(data['bus'].decode())
-                if data['address'] is not None:
-                    address = int(data['address'].decode())
-                if data['vendor'] not in (None , 'None'):
-                    vendor = data['vendor'].decode()
-                if data['product'] not in (None , 'None'):
-                    product = data['product'].decode()
-                if p.search(data['path']) is not None:
-                    j = data['path'].split('/')[-1]
-                    joystick_num = int(j.replace('js', ''))
-                
-            print([port, bus, address, joystick_num, vendor, product])
-        
+            try:
+                adds.append(USBUtil.parseEvents(port, add_events))
+            except NameError:
+                pass
+        for port in remove_events:
+            try:
+                removes.append(USBUtil.parseEvents(port, remove_events))
+            except NameError:
+                pass
+            
+        return [adds, removes]
+    
+    @staticmethod
+    def parseEvents(port, events):
+        p = re.compile(r'/js[0-9]$')
+        # ジョイスティックでなければNoneが入る
+        joystick_num = None
+        for data in events[port]:
+            if data['bus'] is not None:
+                bus = int(data['bus'].decode())
+            if data['address'] is not None:
+                address = int(data['address'].decode())
+            if data['vendor'] not in None:
+                vendor = data['vendor'].decode()
+            if data['product'] not in None:
+                product = data['product'].decode()
+            if p.search(data['path']) is not None:
+                j = data['path'].split('/')[-1]
+                joystick_num = int(j.replace('js', ''))
+
+        return {'port': port, 'bus': bus, 'address': address, 'joystick_num': joystick_num, 'vendor': vendor, 'product': product}
     
     # 物理接続位置を取得する
     # 例: 
@@ -64,12 +88,8 @@ class USBUtil:
         return path
 
     @staticmethod
-    def is_OHC_PC01A(device):
-        return device.attributes.get('idVendor') == b'0079' and device.attributes.get('idProduct') == b'0006'
-
-    @staticmethod
     def is_DENSYA_CON_T01(device):
-        return device.attributes.get('idVendor') == b'0ae4' and device.attributes.get('idProduct') == b'0004'
+        return 
 
     @staticmethod
     def usbTrigger(action, device):

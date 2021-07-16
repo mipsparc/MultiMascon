@@ -8,11 +8,10 @@ from Mascon import Mascon
 import logging
 
 class OHC_PC01A(Mascon):
-    def __init__(self, loco_id):
+    def __init__(self, loco_id, joystick_num):
         self.loco_id = loco_id
         pygame.joystick.init()
-        # TODO 選択可能に
-        self.joy = pygame.joystick.Joystick(0)
+        self.joy = pygame.joystick.Joystick(joystick_num)
         self.joy.init()
         pygame.event.get()
         
@@ -82,6 +81,9 @@ class OHC_PC01A(Mascon):
         self.three = bool(self.joy.get_button(3))
         self.four = bool(self.joy.get_button(4))
         self.five = bool(self.joy.get_button(5))
+
+    def __del__(self):
+        self.joy.quit()
 
 if __name__ == '__main__':
     m = OHC_PC01A()

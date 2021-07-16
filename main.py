@@ -10,8 +10,6 @@ import time
 import sys
 import random
 from Mascon import Mascon
-from OHC_PC01A import OHC_PC01A
-from DENSYA_CON_T01 import DENSYA_CON_T01
 import pygame
 from Command import Command
 import israspi
@@ -74,8 +72,8 @@ if not 'log' in excludes:
     LogRotate.rotate(LOG_DIR)
 
 signal.signal(signal.SIGTERM, safe_halt)
-
 pygame.init()
+USBUtil.startMasconMonitor()
 
 mascons = []
 
@@ -97,6 +95,7 @@ if not 'dsair' in excludes:
     Command.switchToDCC(command_queue)
     time.sleep(1)
 
+USBParser.init()
 USBParser.startMasconMonitor()
 
 last_loop_time = time.time()
@@ -133,9 +132,9 @@ try:
                 mascon.fetchDatabase()
             last_db_check = time.time()
         
-        # 3秒に1回pyusbで接続・抜取情報を取得する
-        if (time.time() - last_usb_check) > 3.0:
-
+        # 1秒に1回pyusbで接続・抜取情報を取得する
+        if (time.time() - last_usb_check) > 1.0:
+            adds, removes = USBUtil.sumUSBEvents()
             last_usb_check = time.time()
         
         # 5秒に1回、なにもなくてもDSAirとの接続を検証する
