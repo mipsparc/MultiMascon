@@ -17,6 +17,9 @@ class Mascon:
     #last_turnout_rerun = time.time()
     
     def fetchDatabase(self):
+        if self.invalid == True:
+            return
+        
         loco = DB.getLocoById(self.loco_id)
         self.ADDR = loco['address']
         accel_curve_group_id = loco['accel_curve_group_id']
@@ -30,6 +33,8 @@ class Mascon:
         self.fetched = True
 
     def advanceTime(self, command_queue):
+        if self.invalid:
+            self.stop(command_queue)
         if not self.fetched:
             return
         
@@ -72,15 +77,17 @@ class Mascon:
             #pass
 
     def getSpeedLevel(self):
+        if self.invalid:
+            return 0
+        
         accel_level = Smooth.getValue(self.kph, self.SPEED_ACCEL_PROFILE)
-        print(f'accel: {accel_level}')
         
         brake_level = self.brake_knotch * 0.5
         self.kph = max(0, self.kph + (self.kph * (accel_level / 5.0) * self.accel_knotch) - brake_level)
         if brake_level == 0 and self.accel_knotch > 0 and self.kph < 1:
             self.kph = 1
         
-        print(f'kph: {self.kph}')
+        print(f'loco_id: {self.loco_id}, kph: {self.kph}')
         speed_level = Smooth.getValue(self.kph, self.SPEED_OUTPUT_PROFILE)
         
         if speed_level > 0:
@@ -88,3 +95,9 @@ class Mascon:
             return level
         
         return 0
+    
+    def stop(self, command_queue):
+        try:
+            Command.setLocoSpeed(command_queue, self.ADDR, 0)
+        except AttributeError:
+            pass

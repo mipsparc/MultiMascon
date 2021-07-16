@@ -3,7 +3,6 @@
 # タイトー 電車でGO! コントローラType2 PS2 (USB接続) からPythonに繋ぎこむライブラリ
 
 import usb.core
-import usb.util
 from Mascon import Mascon
 import logging
 
@@ -18,15 +17,25 @@ class DENSYA_CON_T01(Mascon):
     def __init__(self, loco_id, bus, address):
         devices = usb.core.find(find_all=True, idVendor=0x0ae4, idProduct=0x0004)
         for device in devices:
-            if device.attributes.get('busnum') == bus and device.attributes.get('devnum') == address:
+            if device.bus == bus and device.address == address:
                 self.device = device
                 self.loco_id = loco_id
                 break
         
         # 正しくアサインされたかの検査
         self.device
+        
+        # 切断などで無効状態か
+        self.invalid = False
                 
-    def loadStatus(self):       
+    def loadStatus(self):
+        # デバイスがひきつづき存在するかどうか検証する
+        try:
+            self.device
+        except:
+            self.invalid = True
+            return
+        
         # 3回試行する
         for i in range(3):
             try:
@@ -53,10 +62,10 @@ class DENSYA_CON_T01(Mascon):
             
             except usb.core.USBTimeoutError:
                 pass
-            # TODO: 接続切れたら当該列車は停止して、全体はそのまま生きる
+
             except usb.core.USBError:
-                raise
-            
+                self.invalid = True
+
 if __name__ == '__main__':
     controller = DENSYA_CON_T01()
     controller.read()

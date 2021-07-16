@@ -1,6 +1,7 @@
 import pyudev
 import queue
 import re
+import logging
 
 trig_q = queue.Queue()
 
@@ -8,15 +9,16 @@ class USBUtil:
     # もともとつながっていたデバイスの追加を行う
     @staticmethod
     def init():
-        devices = usb.core.find(find_all=True)
-        for device in devices:
-            USBUtil.usbTrigger('add', device)
+        context = pyudev.Context()
+        for device in context.list_devices():
+            if '/usb' in device.sys_path:
+                USBUtil.usbTrigger('add', device)
     
     # ポートごとにイベントをまとめる
     @staticmethod
     def sumUSBEvents():
         add_events = {}
-        remove_events = {}
+        remove_ports = []
         
         while True:
             try:
@@ -24,52 +26,59 @@ class USBUtil:
                 
                 formatted = {'bus': e['bus'], 'address': e['address'], 'path': e['path'], 'vendor': e['vendor'], 'product': e['product']}
 
+                # 追加
                 if e['action'] == 'add':
                     if e['port'] in add_events:
                         add_events[e['port']].append(formatted)
                     else:
                         add_events[e['port']] = [formatted, ]
+                # 除去
                 else:
-                    if e['port'] in remove_events:
-                        remove_events[e['port']].append(formatted)
-                    else:
-                        remove_events[e['port']] = [formatted, ]
+                    if e['port'] not in remove_ports:
+                        remove_ports.append(e['port'])
             except queue.Empty:
                 break
         
         
         adds = []
-        removes = []
-        for port in add_events:
+        for port, events in add_events.items():
+            # 正常にすべての項目が埋まらなかったときはNameErrorがでる
             try:
-                adds.append(USBUtil.parseEvents(port, add_events))
+                adds.append(USBUtil.parseAddEvents(port, events))
             except NameError:
                 pass
-        for port in remove_events:
-            try:
-                removes.append(USBUtil.parseEvents(port, remove_events))
-            except NameError:
-                pass
+
+        remove_ports_splitted = []
+        for port in remove_ports:
+            port = port[4:]
+            if port == '':
+                continue
+            remove_ports_splitted.append(port)
             
-        return [adds, removes]
+        return [adds, remove_ports_splitted]
     
     @staticmethod
-    def parseEvents(port, events):
+    def parseAddEvents(port, events):
         p = re.compile(r'/js[0-9]$')
         # ジョイスティックでなければNoneが入る
         joystick_num = None
-        for data in events[port]:
+        for data in events:
             if data['bus'] is not None:
                 bus = int(data['bus'].decode())
             if data['address'] is not None:
                 address = int(data['address'].decode())
-            if data['vendor'] not in None:
+            if data['vendor'] is not None:
                 vendor = data['vendor'].decode()
-            if data['product'] not in None:
+            if data['product'] is not None:
                 product = data['product'].decode()
             if p.search(data['path']) is not None:
                 j = data['path'].split('/')[-1]
                 joystick_num = int(j.replace('js', ''))
+        
+        # 基底USBデバイスを対象外にする
+        port = port[4:]
+        if port == '':
+            raise NameError
 
         return {'port': port, 'bus': bus, 'address': address, 'joystick_num': joystick_num, 'vendor': vendor, 'product': product}
     
@@ -88,11 +97,10 @@ class USBUtil:
         return path
 
     @staticmethod
-    def is_DENSYA_CON_T01(device):
-        return 
-
-    @staticmethod
     def usbTrigger(action, device):
+        if '/usb' not in device.sys_path:
+            return
+        
         if action == 'add' or action == 'remove':
             trig_q.put({
                 'action': action,

@@ -71,7 +71,7 @@ class DB:
             FROM mascon_assign
             WHERE mascon_pos = ?
         ''', (mascon_pos,))
-        loco_profile = cur.fetchone()[0]
+        loco_profile = cur.fetchone()
         con.close()
         
         return loco_profile

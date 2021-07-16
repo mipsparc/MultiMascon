@@ -6,14 +6,35 @@ import pygame
 import time
 from Mascon import Mascon
 import logging
+import importlib
 
 class OHC_PC01A(Mascon):
     def __init__(self, loco_id, joystick_num):
-        self.loco_id = loco_id
+        # 切断により無効状態か
+        self.invalid = False
+
+        pygame.init()
         pygame.joystick.init()
+        wait_start_time = time.time()
+        while pygame.joystick.get_count() < 1:
+            if (time.time() - wait_start_time) > 2.0:
+                logging.error(f'ジョイスティックの再接続にはソフトリセットが必要です')
+                self.invalid = True
+                break
+            time.sleep(0.05)
+        
+        if type(joystick_num) != type(0):
+            logging.error(f'OHC_PC01Aにジョイスティック番号が正常に渡されませんでした {joystick_num}')
+            self.invalid = True
+        
+        if self.invalid == True:
+            return
+            
         self.joy = pygame.joystick.Joystick(joystick_num)
         self.joy.init()
         pygame.event.get()
+        
+        self.loco_id = loco_id
         
     # 主幹制御器状態から力行ノッチ・ブレーキノッチ指令に変換する
     def convertPosToAccelBrake(self, pos):
@@ -52,7 +73,11 @@ class OHC_PC01A(Mascon):
 
     # 主幹制御器全体の状態を返す
     def loadStatus(self):
-        # TODO: 接続切れたら当該列車は停止して、全体はそのまま生きる
+        try:
+            self.joy
+        except:
+            self.invalid = True
+        
         pygame.event.get()
         
         accel_knotch, brake_knotch = self.convertPosToAccelBrake([
@@ -81,9 +106,6 @@ class OHC_PC01A(Mascon):
         self.three = bool(self.joy.get_button(3))
         self.four = bool(self.joy.get_button(4))
         self.five = bool(self.joy.get_button(5))
-
-    def __del__(self):
-        self.joy.quit()
 
 if __name__ == '__main__':
     m = OHC_PC01A()

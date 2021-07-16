@@ -10,14 +10,14 @@ import time
 import sys
 import random
 from Mascon import Mascon
-import pygame
 from Command import Command
 import israspi
 import pathlib
 from subprocess import Popen
 import logging
 import signal
-import USBParser
+from USBUtil import USBUtil
+from MasconManager import MasconManager
 
 # 安全にプログラムを終了する
 def safe_halt(*args):
@@ -44,7 +44,10 @@ def safe_halt(*args):
         logger.info('正常終了しました')
         exit()
     else:
-        raise e
+        try:
+            raise e
+        except NameError:
+            exit()
 
 # Pygameをヘッドレスでも動かせるように対策
 os.environ['SDL_VIDEODRIVER'] = 'dummy'
@@ -72,10 +75,6 @@ if not 'log' in excludes:
     LogRotate.rotate(LOG_DIR)
 
 signal.signal(signal.SIGTERM, safe_halt)
-pygame.init()
-USBUtil.startMasconMonitor()
-
-mascons = []
 
 command_queue = Queue()
 
@@ -94,10 +93,7 @@ if not 'dsair' in excludes:
     dsair_process.start()
     Command.switchToDCC(command_queue)
     time.sleep(1)
-
-USBParser.init()
-USBParser.startMasconMonitor()
-
+    
 last_loop_time = time.time()
 last_db_check = 0
 last_usb_check = 0
@@ -106,8 +102,13 @@ last_ping_check = time.time()
 # メインループは送信の余裕を持って0.5秒で回す
 MAIN_LOOP = 0.5
 
-logger.info('起動完了')
+mascon_manager = MasconManager()
+
 try:
+    USBUtil.init()
+    USBUtil.startMasconMonitor()
+
+    logger.info('起動完了')
     while True:        
         if not 'dsair' in excludes and not dsair_process.is_alive():
             logger.error('DSAir2プロセスが終了しています')
@@ -122,19 +123,23 @@ try:
                 break
         
         # 特定のマスコンからの命令だけが処理されないように毎回シャッフルする
-        random.shuffle(mascons)
-        for mascon in mascons:
+        ports = mascon_manager.mascons.keys()
+        random.shuffle(ports)
+        for port in ports:
+            mascon = mascon_manager.mascons[port]
             mascon.advanceTime(command_queue)
         
         # 5秒に1回DBに問い合わせて各マスコン(列車)のパラメータを反映
         if (time.time() - last_db_check) > 5.0:
-            for mascon in mascons:
+            for port, mascon in mascon_manager.mascons.items():
                 mascon.fetchDatabase()
             last_db_check = time.time()
         
         # 1秒に1回pyusbで接続・抜取情報を取得する
         if (time.time() - last_usb_check) > 1.0:
-            adds, removes = USBUtil.sumUSBEvents()
+            adds, remove_ports = USBUtil.sumUSBEvents()
+            mascon_manager.removeControl(remove_ports, command_queue)
+            mascon_manager.addControl(adds)
             last_usb_check = time.time()
         
         # 5秒に1回、なにもなくてもDSAirとの接続を検証する
@@ -162,6 +167,7 @@ except KeyboardInterrupt:
     pass
 
 except Exception as e:
+    logger.warning('異常が発生', exc_info=True)
     is_no_problem = False
 
 # 正常・異常終了時
