@@ -53,7 +53,7 @@ class DB:
         con.row_factory = self.dict_factory
         cur = con.cursor()
         cur.execute('''
-            SELECT address, accel_curve_group_id, speed_curve_group_id, base_level, light_func_id
+            SELECT address, accel_curve_group_id, speed_curve_group_id, base_level, light_func_id, brake_ratio
             FROM loco
             WHERE loco_id = ?
         ''', (str(loco_id)))

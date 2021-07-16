@@ -26,6 +26,7 @@ class Mascon:
         speed_curve_group_id = loco['speed_curve_group_id']
         self.BASE_LEVEL = loco['base_level']
         self.LIGHT_FUNC_ID = loco['light_func_id']
+        self.BRAKE_RATIO = loco['brake_ratio']
         
         self.SPEED_OUTPUT_PROFILE = DB.getSpeedOutputCurveById(speed_curve_group_id)
         self.SPEED_ACCEL_PROFILE = DB.getSpeedAccelCurveById(accel_curve_group_id)
@@ -67,7 +68,7 @@ class Mascon:
         
         accel_level = Smooth.getValue(self.kph, self.SPEED_ACCEL_PROFILE) * self.accel_knotch / self.ACCEL_KNOTCH_NUM
         
-        brake_level = (self.brake_knotch / self.BRAKE_KNOTCH_NUM) * 3.0
+        brake_level = (self.brake_knotch / self.BRAKE_KNOTCH_NUM) * self.BRAKE_RATIO
         self.kph = max(0, self.kph + accel_level - brake_level)
 
         if brake_level == 0 and self.accel_knotch > 0 and self.kph < 1:
