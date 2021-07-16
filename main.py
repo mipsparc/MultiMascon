@@ -123,7 +123,7 @@ try:
                 break
         
         # 特定のマスコンからの命令だけが処理されないように毎回シャッフルする
-        ports = mascon_manager.mascons.keys()
+        ports = list(mascon_manager.mascons.keys())
         random.shuffle(ports)
         for port in ports:
             mascon = mascon_manager.mascons[port]

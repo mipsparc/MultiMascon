@@ -9,6 +9,9 @@ import logging
 import importlib
 
 class OHC_PC01A(Mascon):
+    ACCEL_KNOTCH_NUM = 5
+    BRAKE_KNOTCH_NUM = 9
+    
     def __init__(self, loco_id, joystick_num):
         # 切断により無効状態か
         self.invalid = False

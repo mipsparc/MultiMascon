@@ -82,22 +82,25 @@ class Mascon:
         
         accel_level = Smooth.getValue(self.kph, self.SPEED_ACCEL_PROFILE)
         
-        brake_level = self.brake_knotch * 0.5
-        self.kph = max(0, self.kph + (self.kph * (accel_level / 5.0) * self.accel_knotch) - brake_level)
+        brake_level = (self.brake_knotch / self.BRAKE_KNOTCH_NUM) * 0.5
+        self.kph = max(0, self.kph + (self.kph * (accel_level / self.ACCEL_KNOTCH_NUM) * self.accel_knotch) - brake_level)
+
         if brake_level == 0 and self.accel_knotch > 0 and self.kph < 1:
             self.kph = 1
         
-        print(f'loco_id: {self.loco_id}, kph: {self.kph}')
         speed_level = Smooth.getValue(self.kph, self.SPEED_OUTPUT_PROFILE)
         
         if speed_level > 0:
             level = speed_level + self.BASE_LEVEL
             return level
         
+        print(f'loco_id: {self.loco_id}, kph: {max(self.kph - 1, 0)}')
+                
         return 0
     
     def stop(self, command_queue):
         try:
+            self.kph = 0
             Command.setLocoSpeed(command_queue, self.ADDR, 0)
         except AttributeError:
             pass
