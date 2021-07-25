@@ -75,3 +75,17 @@ class DB:
         con.close()
         
         return loco_profile
+    
+    @classmethod
+    def getButtons(self):
+        con = sqlite3.connect(self.dbfile)
+        cur = con.cursor()
+        cur.execute('''
+            SELECT loco_id, button_id, assign_type, send_key, send_value
+            FROM button_assign
+            JOIN masacon_assign USING (mascon_pos)
+        ''', ())
+        button_profile = cur.fetchall()
+        con.close()
+        
+        return button_profile

@@ -4,6 +4,7 @@
 
 import usb.core
 from Mascon import Mascon
+from Button import Button
 import logging
 
 class DENSYA_CON_T01(Mascon):
@@ -38,6 +39,8 @@ class DENSYA_CON_T01(Mascon):
             self.invalid = True
             return
         
+        self.buttons = []
+        
         # 3回試行する
         for i in range(3):
             try:
@@ -47,18 +50,30 @@ class DENSYA_CON_T01(Mascon):
                     self.brake_knotch = self.BR_LEVEL[BR]
                 if MC != 0xFF:
                     self.accel_knotch = self.MC_LEVEL[MC]
-                self.pedal = PD == 0xFF
                 
-                # TODO: 後で再度実装、DBベースで
-                # 左ボタンで前進
+                if PD == 0xFF:
+                    self.buttons.append(TYPE2_HONE)
+                
+                # 左ボタンと右ボタンでway
                 if HT == 0x06:
                     self.way = 1
-                # 右ボタンで後進
                 elif HT == 0x02:
                     self.way = 2
-                # 上下ボタンで切
-                elif HT == 0x00 or HT == 0x04:
-                    self.way = 0
+                
+                elif HT == 0x00
+                    self.buttons.append(Button.TYPE2_UP)
+                elif HT == 0x04:
+                    self.buttons.append(Button.TYPE2_DOWN)
+                    
+                if BT == 0x02:
+                    self.buttons.append(Button.TYPE2_A)
+                elif BT == 0x01:
+                    self.buttons.append(Button.TYPE2_B)
+                elif BT == 0x04:
+                    self.buttons.append(Button.TYPE2_C)
+                elif BT == 0x08:
+                    self.buttons.append(Button.TYPE2_D)
+
             except KeyError:
                 pass
             
@@ -67,6 +82,9 @@ class DENSYA_CON_T01(Mascon):
 
             except usb.core.USBError:
                 self.invalid = True
+                
+            finally:
+                self.buttons = list(set(self.buttons))
 
 if __name__ == '__main__':
     controller = DENSYA_CON_T01()

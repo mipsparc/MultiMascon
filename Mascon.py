@@ -60,7 +60,7 @@ class Mascon:
             self.last_speed_level = speed_level
             print(f'loco_id: {self.loco_id}, kph: {max(self.kph - 1, 0)}')
             
-        # TODO 変化のあったボタンを取得して、ファンクションを動作させたりする
+        return {'loco':self.loco_id, 'buttons':self.buttons}
 
     def getSpeedLevel(self):
         if self.invalid:

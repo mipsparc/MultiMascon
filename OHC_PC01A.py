@@ -5,8 +5,8 @@
 import pygame
 import time
 from Mascon import Mascon
+from Button import Button
 import logging
-import importlib
 
 class OHC_PC01A(Mascon):
     ACCEL_KNOTCH_NUM = 5
@@ -103,12 +103,13 @@ class OHC_PC01A(Mascon):
         self.accel_knotch = accel_knotch
         self.brake_knotch = brake_knotch
         self.way = way
-        self.white = bool(self.joy.get_button(1))
-        self.yellow =  bool(self.joy.get_button(2))
-        self.zero = bool(self.joy.get_button(0))
-        self.three = bool(self.joy.get_button(3))
-        self.four = bool(self.joy.get_button(4))
-        self.five = bool(self.joy.get_button(5))
+        self.buttons = []
+        if bool(self.joy.get_button(1)):
+            self.buttons.append(Button.OHC_PC01A_WHITE)
+        if bool(self.joy.get_button(2)):
+            self.buttons.append(OHC_PC01A_YELLOW)
+            
+        #TODO blackは一旦放置
 
 if __name__ == '__main__':
     m = OHC_PC01A()

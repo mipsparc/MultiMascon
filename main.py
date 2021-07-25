@@ -37,8 +37,6 @@ def safe_halt(*args):
     # DSAirをリセットしてすべての列車を停止する
     Command.reset(command_queue)
     time.sleep(0.5)
-    if not 'dsair' in excludes:
-        dsair_process.kill()
 
     if is_no_problem:
         logger.info('正常終了しました')
@@ -56,7 +54,7 @@ os.environ['SDL_VIDEODRIVER'] = 'dummy'
 is_no_problem = True
 
 excludes = sys.argv[1:]
-# ex) python3 main.py log dsair
+# ex) python3 main.py log
 
 logger = logging.getLogger(__name__)
 if not 'log' in excludes:
@@ -73,6 +71,8 @@ if not 'log' in excludes:
         
     logging.basicConfig(filename=LOG_DIR + f'/{log_filenum}.txt', level=logging.INFO)
     LogRotate.rotate(LOG_DIR)
+else:
+    logging.basicConfig(level=logging.INFO)
 
 signal.signal(signal.SIGTERM, safe_halt)
 
@@ -86,13 +86,12 @@ if israspi.is_raspi:
     led.on()
 
 # DSAirとの通信プロセスをつくる
-if not 'dsair' in excludes:
-    dsair_process = Process(target=DSAir2.Worker, args=(command_queue, logger))
-    # 親プロセスが死んだら自動的に終了
-    dsair_process.daemon = True
-    dsair_process.start()
-    Command.switchToDCC(command_queue)
-    time.sleep(1)
+dsair_process = Process(target=DSAir2.Worker, args=(command_queue, logger))
+# 親プロセスが死んだら自動的に終了
+dsair_process.daemon = True
+dsair_process.start()
+Command.switchToDCC(command_queue)
+time.sleep(1)
     
 last_loop_time = time.time()
 last_db_check = 0
@@ -115,7 +114,7 @@ try:
             raise RuntimeError('DSAir2プロセスが終了しています')
         
         # 10個以上積み上がったコマンドは飛ばす
-        for i in range(max(command_queue.qsize() - 10, 0)):
+        for i in range(max(command_queue.qsize() - 15, 0)):
             logger.error('コマンドキューが溢れました')
             try:
                 command_queue.get_nowait()
@@ -125,9 +124,13 @@ try:
         # 特定のマスコンからの命令だけが処理されないように毎回シャッフルする
         ports = list(mascon_manager.mascons.keys())
         random.shuffle(ports)
+        button_responses = []
         for port in ports:
             mascon = mascon_manager.mascons[port]
-            mascon.advanceTime(command_queue)
+            button_responses.append(mascon.advanceTime(command_queue))
+            
+        # button_responsesに基づいてアクションを起こす
+        Button.processButtons(button_responses, command_queue)
         
         # 5秒に1回DBに問い合わせて各マスコン(列車)のパラメータを反映
         if (time.time() - last_db_check) > 5.0:
