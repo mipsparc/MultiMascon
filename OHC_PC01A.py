@@ -4,40 +4,13 @@
 
 import pygame
 import time
-from Mascon import Mascon
+from Joystick import Joystick
 from Button import Button
 import logging
 
-class OHC_PC01A(Mascon):
+class OHC_PC01A(Joystick):
     ACCEL_KNOTCH_NUM = 5
     BRAKE_KNOTCH_NUM = 9
-    
-    def __init__(self, loco_id, joystick_num):
-        # 切断により無効状態か
-        self.invalid = False
-
-        pygame.init()
-        pygame.joystick.init()
-        wait_start_time = time.time()
-        while pygame.joystick.get_count() < 1:
-            if (time.time() - wait_start_time) > 2.0:
-                logging.error(f'ジョイスティックの再接続にはソフトリセットが必要です')
-                self.invalid = True
-                break
-            time.sleep(0.05)
-        
-        if type(joystick_num) != type(0):
-            logging.error(f'OHC_PC01Aにジョイスティック番号が正常に渡されませんでした {joystick_num}')
-            self.invalid = True
-        
-        if self.invalid == True:
-            return
-            
-        self.joy = pygame.joystick.Joystick(joystick_num)
-        self.joy.init()
-        pygame.event.get()
-        
-        self.loco_id = loco_id
         
     # 主幹制御器状態から力行ノッチ・ブレーキノッチ指令に変換する
     def convertPosToAccelBrake(self, pos):
@@ -111,14 +84,3 @@ class OHC_PC01A(Mascon):
             
         #TODO blackは一旦放置
 
-if __name__ == '__main__':
-    m = OHC_PC01A()
-    while True:
-        m.loadStatus()
-        print('accel', m.accel_knotch)
-        print('brake', m.brake_knotch)
-        print('way', m.way)
-        print('black', m.black)
-        print('white', m.white)
-        print('yellow', m.yellow)
-        time.sleep(0.5)
