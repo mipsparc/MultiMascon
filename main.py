@@ -27,17 +27,9 @@ def safe_halt(*args):
         led.close()
         emg_path = os.path.dirname(__file__) + '/EmergencyLed.py'
         Popen(f'sleep 1; python3 {emg_path}', shell=True)
-
-    # 残指令キューをすべて破棄する
-    while True:
-        try:
-            command_queue.get_nowait()
-        except queue.Empty:
-            break
-    
-    # DSAirをリセットしてすべての列車を停止する
-    Command.reset(command_queue)
-    time.sleep(0.5)
+        
+    # DSAir2プロセスにより緊急停止が送信されるのを待つ
+    time.sleep(1)
 
     if is_no_problem:
         logger.info('正常終了しました')

@@ -67,9 +67,26 @@ class DENSYA_CON_T03(Mascon):
                 # 上
                 elif HT == 0:
                     self.way = 0
+                    # self.buttons.append(Button.RYOJOU_UP)
                 # 下
                 elif HT == 4:
                     self.way = 0
+                    # self.buttons.append(Button.RYOJOU_DOWN)
+                
+                if BT == 4:
+                    self.buttons.append(Button.RYOJOU_SHITEN)
+                elif BT == 6:
+                    self.buttons.append(Button.RYOJOU_ANNOUNCE)
+                elif BT == 1:
+                    self.buttons.append(Button.RYOJOU_HORN)
+                elif BT == 8:
+                    self.buttons.append(Button.RYOJOU_DOOR_R)
+                elif BT == 16:
+                    self.buttons.append(Button.RYOJOU_DOOR_L)
+                elif BT == 32:
+                    self.buttons.append(Button.RYOJOU_SELECT)
+                elif BT == 64:
+                    self.buttons.append(Button.RYOJOU_START)
 
             except KeyError:
                 pass
@@ -84,17 +101,3 @@ class DENSYA_CON_T03(Mascon):
             finally:
                 self.buttons = list(set(self.buttons))
 
-"""
-初期(保ち) [120, 0, 255, 8, 0, 0, 0, 0]
-
-視点切り替え [120, 0, 255, 8, 4, 0, 0, 0]
-アナウンス [120, 0, 255, 8, 6, 0, 0, 0]
-警笛ボタン [120, 0, 255, 8, 1, 0, 0, 0]
-右扉 [120, 0, 255, 8, 8, 0, 0, 0]
-左扉 [120, 0, 255, 8, 16, 0, 0, 0]
-SELECT [120, 0, 255, 8, 32, 0, 0, 0]
-START [120, 0, 255, 8, 64, 0, 0, 0]
-
-ユルメ方向最大 [40, 0, 255, 8, 0, 0, 0, 0]
-非常方向最大 [220, 0, 255, 8, 0, 0, 0, 0]
-"""

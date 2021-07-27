@@ -25,6 +25,16 @@ class Button:
     TYPE2_D = 28
     TYPE2_HONE = 29
     
+    RYOJOU_UP = 41
+    RYOJOU_DOWN = 42
+    RYOJOU_SELECT = 43
+    RYOJOU_START = 44
+    RYOJOU_SHITEN = 45
+    RYOJOU_ANNOUNCE = 46
+    RYOJOU_HORN = 47
+    RYOJOU_DOOR_R = 48
+    RYOJOU_DOOR_L = 49
+    
     @classmethod
     def processButtons(self, button_responses, command_queue):
         pass

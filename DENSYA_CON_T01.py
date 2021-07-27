@@ -55,16 +55,19 @@ class DENSYA_CON_T01(Mascon):
                 if PD == 0xFF:
                     self.buttons.append(TYPE2_HONE)
                 
-                # 左ボタンと右ボタンでway
+                # 左
                 if HT == 0x06:
                     self.way = 1
+                # 右
                 elif HT == 0x02:
                     self.way = 2
                 
                 elif HT == 0x00:
-                    self.buttons.append(Button.TYPE2_UP)
+                    self.way = 0
+                    #self.buttons.append(Button.TYPE2_UP)
                 elif HT == 0x04:
-                    self.buttons.append(Button.TYPE2_DOWN)
+                    self.way = 0
+                    #self.buttons.append(Button.TYPE2_DOWN)
                     
                 if BT == 0x02:
                     self.buttons.append(Button.TYPE2_A)

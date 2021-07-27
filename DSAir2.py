@@ -9,6 +9,7 @@ import sys
 import glob
 import logging
 from Command import Command
+import signal
 
 class DSAir2:   
     def __init__(self, port, logger):
@@ -36,17 +37,20 @@ class DSAir2:
         
     def reset(self):
         self.send('reset()')
+        logger.info('リセット信号を送信しました')
         
     def read(self):
         return self.ser.read(200)
 
 # 簡単に落ちないように、どんなエラーが出ても一定時間待って再確立を試みる
-def Worker(command_queue, logger):
+def Worker(command_queue, logger):    
     while True:
         try:
             # ttyUSB1になることもあるので
             port = glob.glob('/dev/ttyUSB*')[0]
             dsair = DSAir2(port, logger)
+            signal.signal(signal.SIGTERM, dsair.reset)
+
             Command.switchToDCC(command_queue)
             while True:
                 try:
