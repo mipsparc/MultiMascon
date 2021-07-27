@@ -8,6 +8,7 @@ import queue
 import sys
 import glob
 import logging
+from Command import Command
 
 class DSAir2:   
     def __init__(self, port, logger):
@@ -46,6 +47,7 @@ def Worker(command_queue, logger):
             # ttyUSB1になることもあるので
             port = glob.glob('/dev/ttyUSB*')[0]
             dsair = DSAir2(port, logger)
+            Command.switchToDCC(command_queue)
             while True:
                 try:
                     command = command_queue.get_nowait();

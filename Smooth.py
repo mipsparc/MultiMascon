@@ -14,4 +14,4 @@ def getValue(value, profile):
             b = p[1] - tilt * p[0]
             output = tilt * value + b
             return output
-    return profile[i]
+    return profile[i][1]

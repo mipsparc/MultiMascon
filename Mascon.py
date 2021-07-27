@@ -7,6 +7,11 @@ import time
 import logging
 
 class Mascon:
+    # ノッチ式
+    BRAKE_TYPE_KNOTCH = 1
+    # 自動空気ブレーキ(緩め↔ブレーキ)
+    BRAKE_TYPE_BP = 2
+    
     kph = 0
     last_speed_level = 0
     last_way = 0
@@ -55,6 +60,12 @@ class Mascon:
             self.last_way = way
         
         speed_level = self.getSpeedLevel()
+        if way == 0:
+            self.kph = 0
+            speed_level = 0
+            self.last_way = 0
+            self.last_speed_level = 0
+        
         if self.last_speed_level != speed_level:
             Command.setLocoSpeed(command_queue, self.ADDR, speed_level)
             self.last_speed_level = speed_level
@@ -68,7 +79,18 @@ class Mascon:
         
         accel_level = Smooth.getValue(self.kph, self.SPEED_ACCEL_PROFILE) * self.accel_knotch / self.ACCEL_KNOTCH_NUM
         
-        brake_level = (self.brake_knotch / self.BRAKE_KNOTCH_NUM) * self.BRAKE_RATIO
+        if self.BRAKE_TYPE == self.BRAKE_TYPE_KNOTCH:
+            brake_level = (self.brake_knotch / self.BRAKE_KNOTCH_NUM) * self.BRAKE_RATIO
+        elif self.BRAKE_TYPE == self.BRAKE_TYPE_BP:
+            # 大きくなりすぎないように
+            if self.BC < 5.0:
+                self.BC += self.brake_pos
+            if self.BC < 0:
+                self.BC = 0
+            brake_level = self.BC * 0.5 * self.BRAKE_RATIO
+        else:
+            raise ValueError('不正なブレーキ種別です')
+            
         self.kph = max(0, self.kph + accel_level - brake_level)
 
         if brake_level == 0 and self.accel_knotch > 0 and self.kph < 1:

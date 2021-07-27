@@ -9,6 +9,8 @@ from Button import Button
 import logging
 
 class OHC_PC01A(Joystick):
+    BRAKE_TYPE = Joystick.BRAKE_TYPE_KNOTCH
+
     ACCEL_KNOTCH_NUM = 5
     BRAKE_KNOTCH_NUM = 9
         

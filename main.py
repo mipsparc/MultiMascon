@@ -18,6 +18,7 @@ import logging
 import signal
 from USBUtil import USBUtil
 from MasconManager import MasconManager
+from Button import Button
 
 # 安全にプログラムを終了する
 def safe_halt(*args):
@@ -90,7 +91,6 @@ dsair_process = Process(target=DSAir2.Worker, args=(command_queue, logger))
 # 親プロセスが死んだら自動的に終了
 dsair_process.daemon = True
 dsair_process.start()
-Command.switchToDCC(command_queue)
 time.sleep(1)
     
 last_loop_time = time.time()

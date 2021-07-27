@@ -8,6 +8,7 @@ from Button import Button
 import logging
 
 class DENSYA_CON_T01(Mascon):
+    BRAKE_TYPE = Mascon.BRAKE_TYPE_KNOTCH
     
     brake_knotch = 0
     BR_LEVEL = {0x79: 0, 0x8A: 1, 0x94: 2, 0x9A: 3, 0xA2: 4, 0xA8: 5, 0xAF: 6, 0xB2: 7, 0xB5: 8, 0xB9: 9}
@@ -45,7 +46,7 @@ class DENSYA_CON_T01(Mascon):
         for i in range(3):
             try:
                 # 129: 固定されたエンドポイント
-                [_01, BR, MC, PD, HT, BT] = self.device.read(129, 10, 10)
+                [_01, BR, MC, PD, HT, BT] = self.device.read(129, 8, 10)
                 if BR != 0xFF:
                     self.brake_knotch = self.BR_LEVEL[BR]
                 if MC != 0xFF:
@@ -60,7 +61,7 @@ class DENSYA_CON_T01(Mascon):
                 elif HT == 0x02:
                     self.way = 2
                 
-                elif HT == 0x00
+                elif HT == 0x00:
                     self.buttons.append(Button.TYPE2_UP)
                 elif HT == 0x04:
                     self.buttons.append(Button.TYPE2_DOWN)
