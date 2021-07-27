@@ -162,7 +162,7 @@ except KeyboardInterrupt:
     pass
 
 except Exception as e:
-    logger.warning('異常が発生', exc_info=True)
+    logger.exception('異常が発生')
     is_no_problem = False
 
 # 正常・異常終了時

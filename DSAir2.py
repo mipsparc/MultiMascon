@@ -25,10 +25,10 @@ class DSAir2:
         if (not init_response.decode('ascii').endswith('200 Ok\r\n')
             and not init_response.decode('ascii').endswith('100 Ready\r\n')
         ):
-            logger.error('DSAirを正常に認識できませんでした')
+            logging.error('DSAirを正常に認識できませんでした')
             raise IndexError
         else:
-            logger.info('DSAirを正常に認識しました')
+            logging.info('DSAirを正常に認識しました')
 
     def send(self, value):
         print(value)
@@ -37,19 +37,23 @@ class DSAir2:
         
     def reset(self):
         self.send('reset()')
-        logger.info('リセット信号を送信しました')
+        logging.info('リセット信号を送信しました')
         
     def read(self):
         return self.ser.read(200)
 
+def safe_reset(*args):
+    dsair.reset()
+
 # 簡単に落ちないように、どんなエラーが出ても一定時間待って再確立を試みる
-def Worker(command_queue, logger):    
+def Worker(command_queue, logger):
+    global dsair
     while True:
         try:
             # ttyUSB1になることもあるので
             port = glob.glob('/dev/ttyUSB*')[0]
             dsair = DSAir2(port, logger)
-            signal.signal(signal.SIGTERM, dsair.reset)
+            signal.signal(signal.SIGTERM, safe_reset)
 
             Command.switchToDCC(command_queue)
             while True:
@@ -62,5 +66,5 @@ def Worker(command_queue, logger):
         except IndexError:
             time.sleep(3)
         except Exception as e:
-            logger.exception('DSAirとの接続に失敗しました')
+            logging.exception('DSAirとの接続に失敗しました')
             time.sleep(3)
