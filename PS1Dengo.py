@@ -19,6 +19,7 @@ class PS1Dengo(Joystick):
     BRAKE_TYPE = Joystick.BRAKE_TYPE_KNOTCH
     ACCEL_KNOTCH_NUM = 5
     BRAKE_KNOTCH_NUM = 9
+    way = 0
 
     def loadStatus(self):
         try:
@@ -27,7 +28,6 @@ class PS1Dengo(Joystick):
             self.invalid = True
         
         pygame.event.get()
-        
         buttons = [0] * self.BUTTON_NUM
         for i in range(self.BUTTON_NUM):
             buttons[i] = self.joy.get_button(i)
@@ -36,7 +36,7 @@ class PS1Dengo(Joystick):
         result = self.arrangeJoyData(buttons)
         self.accel_knotch = result['mascon']
         self.brake_knotch = result['brake']
-
+        
     def arrangeJoyData(self, buttons):
         if buttons[9]:
             # SELECT
