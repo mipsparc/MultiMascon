@@ -63,15 +63,13 @@ class Mascon:
         if way == 0:
             self.kph = 0
             speed_level = 0
-            self.last_way = 0
-            self.last_speed_level = 0
         
         if self.last_speed_level != speed_level:
             Command.setLocoSpeed(command_queue, self.ADDR, speed_level)
             self.last_speed_level = speed_level
             print(f'loco_id: {self.loco_id}, kph: {max(self.kph - 1, 0)}')
             
-        return {'loco':self.loco_id, 'buttons':self.buttons}
+        return {'addr':self.ADDR, 'loco_id':self.loco_id, 'buttons':self.buttons}
 
     def getSpeedLevel(self):
         if self.invalid:

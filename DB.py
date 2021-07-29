@@ -79,13 +79,20 @@ class DB:
     @classmethod
     def getButtons(self):
         con = sqlite3.connect(self.dbfile)
+        con.row_factory = self.dict_factory
         cur = con.cursor()
         cur.execute('''
             SELECT loco_id, button_id, assign_type, send_key, send_value
             FROM button_assign
-            JOIN masacon_assign USING (mascon_pos)
+            JOIN mascon_assign USING (mascon_pos)
         ''', ())
         button_profile = cur.fetchall()
         con.close()
+                
+        output = {}
+        for p in button_profile:
+            if p['loco_id'] not in output:
+                output[p['loco_id']] = {}
+            output[p['loco_id']][p['button_id']] = p
         
-        return button_profile
+        return output

@@ -66,9 +66,8 @@ class DENSYA_CON_T03(Mascon):
                 
                 # 上
                 elif HT == 0:
-                    self.way = 0
-                    # self.buttons.append(Button.RYOJOU_UP)
-                # 下
+                    self.buttons.append(Button.RYOJOU_UP)
+                # 下 (切)
                 elif HT == 4:
                     self.way = 0
                     # self.buttons.append(Button.RYOJOU_DOWN)

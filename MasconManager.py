@@ -1,6 +1,7 @@
 from OHC_PC01A import OHC_PC01A
 from DENSYA_CON_T01 import DENSYA_CON_T01
 from DENSYA_CON_T03 import DENSYA_CON_T03
+from PS1Dengo import PS1Dengo
 from DB import DB
 import logging
 
@@ -36,6 +37,13 @@ class MasconManager:
                     continue
                 self.mascon_connections[add['port']] = add
                 self.mascons[add['port']] = DENSYA_CON_T03(loco_id[0], add['bus'], add['address'])
+            elif add['vendor'] == '0925' and add['product'] == '1801': # ELECOM JC-PS201U
+                logging.info('PS1電車でGOマスコン(ELECOM JC-PS201U)を認識')
+                loco_id = DB.getLocoIdByMasconPos(add['port'])
+                if loco_id is None:
+                    continue
+                self.mascon_connections[add['port']] = add
+                self.mascons[add['port']] = PS1Dengo(loco_id[0], add['joystick_num'])
             else:
                 # 関係ないデバイス
                 pass

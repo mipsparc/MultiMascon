@@ -27,8 +27,9 @@ def safe_halt(*args):
         led.close()
         emg_path = os.path.dirname(__file__) + '/EmergencyLed.py'
         Popen(f'sleep 1; python3 {emg_path}', shell=True)
-        
-    # DSAir2プロセスにより緊急停止が送信されるのを待つ
+    
+    Command.reset(command_queue)
+    # DSAir2プロセスにより緊急停止が送信されるのを待つ(ふつうはSIGTERMですぐに停止する)
     time.sleep(1)
 
     if is_no_problem:
@@ -94,6 +95,7 @@ last_ping_check = time.time()
 MAIN_LOOP = 0.5
 
 mascon_manager = MasconManager()
+button = Button()
 
 try:
     USBUtil.init()
@@ -116,13 +118,13 @@ try:
         # 特定のマスコンからの命令だけが処理されないように毎回シャッフルする
         ports = list(mascon_manager.mascons.keys())
         random.shuffle(ports)
-        button_responses = []
+        buttons_responses = []
         for port in ports:
             mascon = mascon_manager.mascons[port]
-            button_responses.append(mascon.advanceTime(command_queue))
+            buttons_responses.append(mascon.advanceTime(command_queue))
             
         # button_responsesに基づいてアクションを起こす
-        Button.processButtons(button_responses, command_queue)
+        button.processButtons(buttons_responses, command_queue)
         
         # 5秒に1回DBに問い合わせて各マスコン(列車)のパラメータを反映
         if (time.time() - last_db_check) > 5.0:

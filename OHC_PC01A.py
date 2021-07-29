@@ -3,7 +3,6 @@
 # サンイン重工 OHC-PC01AコントローラからPythonへ繋ぎこむライブラリ
 
 import pygame
-import time
 from Joystick import Joystick
 from Button import Button
 import logging
@@ -82,7 +81,7 @@ class OHC_PC01A(Joystick):
         if bool(self.joy.get_button(1)):
             self.buttons.append(Button.OHC_PC01A_WHITE)
         if bool(self.joy.get_button(2)):
-            self.buttons.append(OHC_PC01A_YELLOW)
+            self.buttons.append(Button.OHC_PC01A_YELLOW)
             
         #TODO blackは一旦放置
 

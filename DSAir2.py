@@ -44,6 +44,7 @@ class DSAir2:
 
 def safe_reset(*args):
     dsair.reset()
+    exit()
 
 # 簡単に落ちないように、どんなエラーが出ても一定時間待って再確立を試みる
 def Worker(command_queue, logger):

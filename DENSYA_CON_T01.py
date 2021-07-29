@@ -53,7 +53,7 @@ class DENSYA_CON_T01(Mascon):
                     self.accel_knotch = self.MC_LEVEL[MC]
                 
                 if PD == 0xFF:
-                    self.buttons.append(TYPE2_HONE)
+                    self.buttons.append(Button.TYPE2_HONE)
                 
                 # 左
                 if HT == 0x06:
@@ -63,8 +63,7 @@ class DENSYA_CON_T01(Mascon):
                     self.way = 2
                 
                 elif HT == 0x00:
-                    self.way = 0
-                    #self.buttons.append(Button.TYPE2_UP)
+                    self.buttons.append(Button.TYPE2_UP)
                 elif HT == 0x04:
                     self.way = 0
                     #self.buttons.append(Button.TYPE2_DOWN)

@@ -6,7 +6,7 @@ from Mascon import Mascon
 from Button import Button
 import logging
 
-class Joystick(Mascon):
+class Joystick(Mascon):    
     def __init__(self, loco_id, joystick_num):
         # 切断により無効状態か
         self.invalid = False
