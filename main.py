@@ -96,6 +96,7 @@ MAIN_LOOP = 0.5
 
 mascon_manager = MasconManager()
 button = Button()
+button.getProfile()
 
 try:
     USBUtil.init()
@@ -107,7 +108,7 @@ try:
             logger.error('DSAir2プロセスが終了しています')
             raise RuntimeError('DSAir2プロセスが終了しています')
         
-        # 10個以上積み上がったコマンドは飛ばす
+        # 15個以上積み上がったコマンドは飛ばす
         for i in range(max(command_queue.qsize() - 15, 0)):
             logger.error('コマンドキューが溢れました')
             try:
@@ -126,10 +127,14 @@ try:
         # button_responsesに基づいてアクションを起こす
         button.processButtons(buttons_responses, command_queue)
         
-        # 5秒に1回DBに問い合わせて各マスコン(列車)のパラメータを反映
+        # 5秒に1回DBに問い合わせ
         if (time.time() - last_db_check) > 5.0:
+            # 各マスコン(列車)のパラメータを反映
             for port, mascon in mascon_manager.mascons.items():
                 mascon.fetchDatabase()
+            
+            # ボタン設定を取得
+            button.getProfile()       
             last_db_check = time.time()
         
         # 1秒に1回pyusbで接続・抜取情報を取得する

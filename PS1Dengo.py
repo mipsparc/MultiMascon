@@ -1,6 +1,6 @@
 #coding: utf-8
 
-# PS1版電車でGOコントローラ(現状ELECOM製変換アダプタ JC-PS201Uにのみ対応)をPythonにつなぐライブラリ
+# PS1版電車でGOコントローラ(現状ELECOM製変換アダプタ JC-PS101Uにのみ対応)をPythonにつなぐライブラリ
 # ワンハンドル、ツーハンドルともに対応しています
 
 # 最初にブレーキゆるめ→非常、0ノッチ→フルノッチを行ってください。
@@ -14,7 +14,7 @@ import logging
 
 class PS1Dengo(Joystick):
     # ジョイスティックのボタン数
-    BUTTON_NUM = 16
+    BUTTON_NUM = 12
     
     BRAKE_TYPE = Joystick.BRAKE_TYPE_KNOTCH
     ACCEL_KNOTCH_NUM = 5
@@ -31,12 +31,27 @@ class PS1Dengo(Joystick):
         buttons = [0] * self.BUTTON_NUM
         for i in range(self.BUTTON_NUM):
             buttons[i] = self.joy.get_button(i)
+        ax = self.joy.get_axis(0)
+        ax2 = self.joy.get_axis(1)
+        
+        # 未接続時
+        if ax2 == 0.0:
+            self.accel_knotch = 0
+            self.brake_knotch = 9
+            return
 
         self.buttons = []
+        if ax < 0:
+            buttons += [1, 1]
+        elif ax == 0.0:
+            buttons += [0,0]
+        else: # ax > 0
+            buttons += [0, 1]
         result = self.arrangeJoyData(buttons)
         self.accel_knotch = result['mascon']
         self.brake_knotch = result['brake']
         
+    @classmethod
     def arrangeJoyData(self, buttons):
         if buttons[9]:
             # SELECT
@@ -61,47 +76,47 @@ class PS1Dengo(Joystick):
         buttons[1] = 0
         
         button_value = int(''.join(map(str, buttons)), 2) << 1
-        # 最初は-10の値が出る。ガチャガチャしてると正しい値が出る
-        if button_value == 4618:
+
+        if button_value == 1158:
             mascon = 0
             brake = 8
-        elif button_value == 5642:
+        elif button_value == 1414:
             mascon = 0
             brake = 7
-        elif button_value == 2058:
+        elif button_value == 518:
             mascon = 0
             brake = 6
-        elif button_value == 3082:
+        elif button_value == 774:
             mascon = 0
             brake = 5
-        elif button_value == 6154:
+        elif button_value == 1542:
             mascon = 0
             brake = 4
-        elif button_value == 7178:
+        elif button_value == 1798:
             mascon = 0
             brake = 3
-        elif button_value == 2570:
+        elif button_value == 646:
             mascon = 0
             brake = 2
-        elif button_value == 3594:
+        elif button_value == 902:
             mascon = 0
             brake = 1
-        elif button_value == 6666:
+        elif button_value == 1670:
             mascon = 0
             brake = 0
-        elif button_value == 72200:
+        elif button_value == 18050:
             mascon = 1
             brake = 0
-        elif button_value == 6664:
+        elif button_value == 1666:
             mascon = 2
             brake = 0
-        elif button_value == 72194:
+        elif button_value == 18054:
             mascon = 3
             brake = 0
-        elif button_value == 6658:
+        elif button_value == 1670:
             mascon = 4
             brake = 0
-        elif button_value == 72192:
+        elif button_value == 18048:
             mascon = 5
             brake = 0
         else:
@@ -111,5 +126,28 @@ class PS1Dengo(Joystick):
         return {'mascon': mascon, 'brake': brake}
 
         
-if __name__ == '__main__':
-    pass
+if __name__ == '__main__':    
+    import time
+    pygame.init()
+    pygame.joystick.init()
+    
+    joy = pygame.joystick.Joystick(0)
+    joy.init()
+    
+    while True:
+        pygame.event.get()
+        buttons = [0] * PS1Dengo.BUTTON_NUM
+        for i in range(PS1Dengo.BUTTON_NUM):
+            buttons[i] = joy.get_button(i)
+        ax = joy.get_axis(0)
+
+        if ax < 0:
+            buttons += [1, 1]
+        elif ax == 0.0:
+            buttons += [0,0]
+        else: # ax > 0
+            buttons += [0, 1]
+            
+        result = PS1Dengo.arrangeJoyData(buttons)
+        
+        time.sleep(0.1)

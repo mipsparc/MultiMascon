@@ -1,4 +1,5 @@
 #coding: utf-8
+
 from DB import DB
 from Command import Command
 import time
@@ -71,9 +72,10 @@ class Button:
     last_buttons = {}
     new_last_buttons = {}
     last_state_for_alternate = {}
+    profile = {}
     
     # DBから引くのはソフト起動時のみ
-    def __init__(self):
+    def getProfile(self):
         self.profile = DB.getButtons()
         
     # 前回も押してあったもの

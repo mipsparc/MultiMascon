@@ -37,8 +37,8 @@ class MasconManager:
                     continue
                 self.mascon_connections[add['port']] = add
                 self.mascons[add['port']] = DENSYA_CON_T03(loco_id[0], add['bus'], add['address'])
-            elif add['vendor'] == '0925' and add['product'] == '1801': # ELECOM JC-PS201U
-                logging.info('PS1電車でGOマスコン(ELECOM JC-PS201U)を認識')
+            elif add['vendor'] == '0925' and add['product'] == '8888':
+                logging.info('PS1電車でGOマスコン(ELECOM JC-PS101U)を認識')
                 loco_id = DB.getLocoIdByMasconPos(add['port'])
                 if loco_id is None:
                     continue
