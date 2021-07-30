@@ -12,8 +12,7 @@ class OHC_PC01A(Joystick):
 
     ACCEL_KNOTCH_NUM = 5
     BRAKE_KNOTCH_NUM = 9
-    way = 0
-        
+
     # 主幹制御器状態から力行ノッチ・ブレーキノッチ指令に変換する
     def convertPosToAccelBrake(self, pos):
         if pos == [1, 0, 0, 1]:

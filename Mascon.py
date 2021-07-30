@@ -18,6 +18,10 @@ class Mascon:
     # DBから初回情報取得済みかどうか
     fetched = False
     
+    accel_knotch = 0
+    brake_knotch = 0
+    way = 0
+    
     def fetchDatabase(self):
         if self.invalid == True:
             return
@@ -45,22 +49,20 @@ class Mascon:
             return
         
         self.loadStatus()
-        
-        way = self.way
-        
+                
         # 方向転換
-        if self.last_way != way:
+        if self.last_way != self.way:
             Command.setLocoFunction(command_queue, self.ADDR, self.LIGHT_FUNC_ID, 1)
             Command.setLocoFunction(command_queue, self.ADDR, self.LIGHT_FUNC_ID, 0)
-            Command.setLocoDirection(command_queue, self.ADDR, way)
-            if way == 0:
+            Command.setLocoDirection(command_queue, self.ADDR, self.way)
+            if self.way == 0:
                 Command.setLocoFunction(command_queue, self.ADDR, self.LIGHT_FUNC_ID, 0)
             else:
                 Command.setLocoFunction(command_queue, self.ADDR, self.LIGHT_FUNC_ID, 1)
-            self.last_way = way
+            self.last_way = self.way
         
         speed_level = self.getSpeedLevel()
-        if way == 0:
+        if self.way == 0:
             self.kph = 0
             speed_level = 0
         
