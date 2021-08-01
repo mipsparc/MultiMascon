@@ -66,7 +66,8 @@ class PS1Dengo(Joystick):
             
             if buttons[9]:
                 # SELECT
-                self.buttons.append(Button.PS1_DENGO_SELECT)
+                #self.buttons.append(Button.PS1_DENGO_SELECT)
+                self.way = 0
             elif buttons[8]:
                 # START
                 self.buttons.append(Button.PS1_DENGO_START)

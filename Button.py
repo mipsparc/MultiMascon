@@ -42,7 +42,7 @@ class Button:
     RYOJOU_DOOR_R = 48
     RYOJOU_DOOR_L = 49
     
-    PS1_DENGO_SELECT = 61
+    #PS1_DENGO_SELECT = 61
     PS1_DENGO_START = 62
     
     BUTTONS = {
@@ -65,7 +65,7 @@ class Button:
         RYOJOU_SHITEN: '電GO 旅情編ツーハン 視点',
         RYOJOU_ANNOUNCE: '電GO 旅情編ツーハン アナウンス',
         'title_ps1_dengo': '-----電車でGO PS1ワンハン・ツーハン-----',
-        PS1_DENGO_SELECT: '電車でGO PS1 SELECT',
+        #PS1_DENGO_SELECT: '電車でGO PS1 SELECT',
         PS1_DENGO_START: '電車でGO PS1 START',
     }
     
@@ -130,11 +130,11 @@ class Button:
                 elif assign_type == self.ASSIGN_TYPE_ACCESSORY_MOMENTARY:
                     if send_value == '':
                         continue
-                    Command.setTurnout(command_queue, addr, send_key, send_value)
+                    Command.setTurnout(command_queue, send_key, send_value)
                 
                 elif assign_type == self.ASSIGN_TYPE_ACCESSORY_ALTERNATE:
                     send_value = self.getLastStateForAlternate(addr, button_id)
-                    Command.setTurnout(command_queue, addr, send_key, send_value)
+                    Command.setTurnout(command_queue, send_key, send_value)
                 
                 new_last_buttons.append(f"{addr}-{button_id}")
                 
