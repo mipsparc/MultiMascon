@@ -82,7 +82,7 @@ class DB:
         con.row_factory = self.dict_factory
         cur = con.cursor()
         cur.execute('''
-            SELECT loco_id, button_id, assign_type, send_key, send_value
+            SELECT loco_id, button_id, assign_type, send_key
             FROM button_assign
             JOIN mascon_assign USING (mascon_pos)
         ''', ())

@@ -4,19 +4,14 @@ from DB import DB
 from Command import Command
 import time
 
-# 各マスコンのボタンとアクションを統一的に扱うIDを管理する
+# 各マスコンのボタンを統一的に扱う
 class Button:
-    ASSIGN_TYPE_FUNC_MOMENTARY = 1
     ASSIGN_TYPE_FUNC_ALTERNATE = 2
-
-    ASSIGN_TYPE_ACCESSORY_MOMENTARY = 3
     ASSIGN_TYPE_ACCESSORY_ALTERNATE = 4
     
     ASSIGN_TYPES = {
-        ASSIGN_TYPE_FUNC_MOMENTARY: '押してワンショットのアクションをするファンクション',
-        ASSIGN_TYPE_FUNC_ALTERNATE: '押してON、もう一度押してOFFのアクションをするファンクション',
-        ASSIGN_TYPE_ACCESSORY_MOMENTARY: '押してワンショットのアクションをするアクセサリ',
-        ASSIGN_TYPE_ACCESSORY_ALTERNATE: '押してON、もう一度押してOFFのアクションをするアクセサリ', 
+        ASSIGN_TYPE_FUNC_ALTERNATE: 'ファンクション',
+        ASSIGN_TYPE_ACCESSORY_ALTERNATE: 'アクセサリ',
     }
     
     OHC_PC01A_WHITE = 11
@@ -71,29 +66,29 @@ class Button:
     
     last_buttons = {}
     new_last_buttons = {}
-    last_state_for_alternate = {}
+    last_buttons_for_alternate = {}
     profile = {}
     
-    # DBから引くのはソフト起動時のみ
     def getProfile(self):
         self.profile = DB.getButtons()
         
-    # 前回も押してあったもの
+    # 前回も押してあったか判定
     def isStillExistFromLastTime(self, addr, button_id):
         if f"{addr}-{button_id}" in self.last_buttons:
             return True
         
         return False
     
-    def getLastStateForAlternate(self, addr, button_id):
-        if f"{addr}-{button_id}" in self.last_state_for_alternate:
-            if self.last_state_for_alternate[f"{addr}-{button_id}"] + 0.3 > time.time():
+    # 次の出力ステート(1/0)を出す
+    def getLastButtonForAlternate(self, addr, button_id):
+        if f"{addr}-{button_id}" in self.last_buttons_for_alternate:
+            if self.last_buttons_for_alternate[f"{addr}-{button_id}"] + 0.3 > time.time():
                 return 1
             else:
-                del(self.last_state_for_alternate[f"{addr}-{button_id}"])
+                del(self.last_buttons_for_alternate[f"{addr}-{button_id}"])
                 return 0
         
-        self.last_state_for_alternate[f"{addr}-{button_id}"] = time.time()
+        self.last_buttons_for_alternate[f"{addr}-{button_id}"] = time.time()
         return 1
 
     def processButtons(self, buttons_responses, command_queue):
@@ -110,30 +105,18 @@ class Button:
                     ps = self.profile[loco_id][button_id]
                     assign_type = ps['assign_type']
                     send_key = ps['send_key']
-                    # Nullのときは空文字
-                    send_value = ps['send_value']
                 except KeyError:
                     continue
     
                 if self.isStillExistFromLastTime(addr, button_id):
                     continue
-                                
-                if assign_type == self.ASSIGN_TYPE_FUNC_MOMENTARY:
-                    if send_value == '':
-                        continue
-                    Command.setLocoFunction(command_queue, addr, send_key, send_value)
                     
-                elif assign_type == self.ASSIGN_TYPE_FUNC_ALTERNATE:
-                    send_value = self.getLastStateForAlternate(addr, button_id)
+                if assign_type == self.ASSIGN_TYPE_FUNC_ALTERNATE:
+                    send_value = self.getLastButtonForAlternate(addr, button_id)
                     Command.setLocoFunction(command_queue, addr, send_key, send_value)
-
-                elif assign_type == self.ASSIGN_TYPE_ACCESSORY_MOMENTARY:
-                    if send_value == '':
-                        continue
-                    Command.setTurnout(command_queue, send_key, send_value)
                 
                 elif assign_type == self.ASSIGN_TYPE_ACCESSORY_ALTERNATE:
-                    send_value = self.getLastStateForAlternate(addr, button_id)
+                    send_value = self.getLastButtonForAlternate(addr, button_id)
                     Command.setTurnout(command_queue, send_key, send_value)
                 
                 new_last_buttons.append(f"{addr}-{button_id}")
