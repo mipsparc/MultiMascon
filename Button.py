@@ -40,6 +40,19 @@ class Button:
     #PS1_DENGO_SELECT = 61
     PS1_DENGO_START = 62
     
+    SW_A = 72
+    SW_B = 73
+    SW_X = 74
+    SW_Y = 75
+    SW_HOME = 76
+    SW_CIRCLE = 77
+    SW_L = 78
+    SW_ZL = 79
+    SW_R = 80
+    SW_ZR = 81
+    SW_PLUS = 82
+    SW_MINUS = 83
+    
     BUTTONS = {
         'title_sanin': '-----サンインマスコン-----',
         OHC_PC01A_WHITE: 'サンインワンハン 白',
@@ -62,6 +75,19 @@ class Button:
         'title_ps1_dengo': '-----電車でGO PS1ワンハン・ツーハン-----',
         #PS1_DENGO_SELECT: '電車でGO PS1 SELECT',
         PS1_DENGO_START: '電車でGO PS1 START',
+        'title_sw_dengo': '-----電車でGO!! Switchワンハン-----',
+        SW_A: '電GO!! Switchワンハン A',
+        SW_B: '電GO!! Switchワンハン B',
+        SW_X: '電GO!! Switchワンハン X',
+        SW_Y: '電GO!! Switchワンハン Y',
+        SW_HOME: '電GO!! Switchワンハン ホーム',
+        SW_CIRCLE: '電GO!! Switchワンハン ○',
+        SW_L: '電GO!! Switchワンハン L',
+        SW_ZL: '電GO!! Switchワンハン ZL',
+        SW_R: '電GO!! Switchワンハン R',
+        SW_ZR: '電GO!! Switchワンハン ZR',
+        SW_PLUS: '電GO!! Switchワンハン +',
+        SW_MINUS: '電GO!! Switchワンハン -',
     }
     
     last_buttons = {}

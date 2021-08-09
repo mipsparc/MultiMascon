@@ -21,6 +21,7 @@ class Mascon:
     accel_knotch = 0
     brake_knotch = 0
     way = 0
+    buttons = []
     
     def fetchDatabase(self):
         if self.invalid == True:
