@@ -25,10 +25,12 @@ class DSAir2:
         if (not init_response.decode('ascii').endswith('200 Ok\r\n')
             and not init_response.decode('ascii').endswith('100 Ready\r\n')
         ):
-            logging.error('DSAirを正常に認識できませんでした')
+            if logger:
+                logging.error('DSAirを正常に認識できませんでした')
             raise IndexError
         else:
-            logging.info('DSAirを正常に認識しました')
+            if logger:
+                logging.info('DSAirを正常に認識しました')
 
     def send(self, value):
         print(value)
