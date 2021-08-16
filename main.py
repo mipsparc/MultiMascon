@@ -11,7 +11,6 @@ import sys
 import random
 from Mascon import Mascon
 from Command import Command
-import israspi
 import pathlib
 from subprocess import Popen
 import logging
@@ -23,7 +22,7 @@ from Button import Button
 # 安全にプログラムを終了する
 def safe_halt(*args):
     # 高速点滅は異常
-    if israspi.is_raspi and not is_no_problem:
+    if not is_no_problem:
         led.close()
         emg_path = os.path.dirname(__file__) + '/EmergencyLed.py'
         Popen(f'sleep 1; python3 {emg_path}', shell=True)
@@ -52,10 +51,7 @@ excludes = sys.argv[1:]
 
 logger = logging.getLogger(__name__)
 if not 'log' in excludes:
-    if israspi.is_raspi:
-        LOG_DIR = '/mnt/database/log/'
-    else:
-        LOG_DIR = './log/'
+    LOG_DIR = '/mnt/database/log/'
     os.makedirs(LOG_DIR, exist_ok=True)
     last_log_filenums = [int(p.stem) for p in pathlib.Path(LOG_DIR).iterdir()]
     if last_log_filenums == []:
@@ -72,12 +68,12 @@ signal.signal(signal.SIGTERM, safe_halt)
 
 command_queue = Queue()
 
-if israspi.is_raspi:
-    # 前回の異常終了警告プロセスがあったら止める
-    Popen('pkill -f "EmergencyLed"', shell=True)
-    from gpiozero import LED
-    led = LED(15)
-    led.on()
+
+# 前回の異常終了警告プロセスがあったら止める
+Popen('pkill -f "EmergencyLed"', shell=True)
+from gpiozero import LED
+led = LED(15)
+led.on()
 
 # DSAirとの通信プロセスをつくる
 dsair_process = Process(target=DSAir2.Worker, args=(command_queue, logger))
@@ -122,9 +118,11 @@ try:
         buttons_responses = []
         for port in ports:
             mascon = mascon_manager.mascons[port]
-            buttons_responses.append(mascon.advanceTime(command_queue))
+            # それぞれのマスコンのループを実行する
+            buttons_response = mascon.advanceTime(command_queue)
+            buttons_responses.append(buttons_response)
             
-        # button_responsesに基づいてアクションを起こす
+        # buttons_responsesに基づいてアクションを起こす
         button.processButtons(buttons_responses, command_queue)
         
         # 5秒に1回DBに問い合わせ
@@ -149,11 +147,10 @@ try:
             Command.setPing(command_queue)
             last_ping_check = time.time()
         
-        if israspi.is_raspi:
-            if time.time() % 2 > 1.0:
-                led.on()
-            else:
-                led.off()
+        if time.time() % 2 > 1.0:
+            led.on()
+        else:
+            led.off()
 
         # メインループにかかった時間(開発用)
         main_loop_time = time.time() - last_loop_time
@@ -172,6 +169,6 @@ except Exception as e:
     logger.exception('異常が発生')
     is_no_problem = False
 
-# 正常・異常終了時
+# 常に列車を停止させる
 finally:
     safe_halt()
