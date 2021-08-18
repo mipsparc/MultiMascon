@@ -1,15 +1,11 @@
 #coding: utf-8
 
 import sqlite3
-import israspi
 import logging
 
 class DB:
-    if israspi.is_raspi:
-        dbfile = '/mnt/database/multimascon.sqlite3'
-    else:
-        dbfile = 'multimascon.sqlite3'
-    
+    dbfile = '/mnt/database/multimascon.sqlite3'
+
     @staticmethod
     def dict_factory(cursor, row):
         d = {}
@@ -88,7 +84,8 @@ class DB:
         ''', ())
         button_profile = cur.fetchall()
         con.close()
-                
+        
+        # 各車両ごとにボタン操作をまとめる
         output = {}
         for p in button_profile:
             if p['loco_id'] not in output:
@@ -96,3 +93,23 @@ class DB:
             output[p['loco_id']][p['button_id']] = p
         
         return output
+
+    @classmethod
+    def getKeyboards(self):
+        con = sqlite3.connect(self.dbfile)
+        con.row_factory = self.dict_factory
+        cur = con.cursor()
+        cur.execute('''
+            SELECT assign_type, key_code, num
+            FROM keyboard_assign
+        ''', ())
+        keyboard_profiles = cur.fetchall()
+        con.close()
+
+        # key_codeをキーにする
+        output = {}
+        for keyboard_profile in keyboard_profiles:
+            output[int(keyboard_profile['key_code'])] = keyboard_profile
+        
+        return output
+

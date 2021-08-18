@@ -46,8 +46,9 @@ class Mascon:
     def advanceTime(self, command_queue):
         if self.invalid:
             self.stop(command_queue)
+            return {}
         if not self.fetched:
-            return
+            return {}
         
         self.loadStatus()
                 

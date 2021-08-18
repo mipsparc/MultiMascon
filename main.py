@@ -18,6 +18,9 @@ import signal
 from USBUtil import USBUtil
 from MasconManager import MasconManager
 from Button import Button
+from gpiozero import LED
+from Keyboard import Keyboard
+
 
 # 安全にプログラムを終了する
 def safe_halt(*args):
@@ -71,9 +74,8 @@ command_queue = Queue()
 
 # 前回の異常終了警告プロセスがあったら止める
 Popen('pkill -f "EmergencyLed"', shell=True)
-from gpiozero import LED
+# ステータスLEDをGPIOに割り付ける
 led = LED(15)
-led.on()
 
 # DSAirとの通信プロセスをつくる
 dsair_process = Process(target=DSAir2.Worker, args=(command_queue, logger))
@@ -86,22 +88,24 @@ last_loop_time = time.time()
 last_db_check = 0
 last_usb_check = 0
 last_ping_check = time.time()
-
 # メインループは送信の余裕を持って0.5秒で回す
 MAIN_LOOP = 0.5
 
-mascon_manager = MasconManager()
-button = Button()
-button.getProfile()
-
 try:
+    mascon_manager = MasconManager()
+    button = Button()
+    button.getProfile()
+    keyboard = Keyboard()
+    keyboard.getProfile()
+    keyboard.startScan()
+
     USBUtil.init()
     USBUtil.startMasconMonitor()
 
     logger.info('起動完了')
-    while True:        
-        if not 'dsair' in excludes and not dsair_process.is_alive():
-            logger.error('DSAir2プロセスが終了しています')
+    # メインループ
+    while True:
+        if not dsair_process.is_alive():
             raise RuntimeError('DSAir2プロセスが終了しています')
         
         # 15個以上積み上がったコマンドは飛ばす
@@ -121,18 +125,24 @@ try:
             # それぞれのマスコンのループを実行する
             buttons_response = mascon.advanceTime(command_queue)
             buttons_responses.append(buttons_response)
-            
-        # buttons_responsesに基づいてアクションを起こす
+        
+        # 押されたキー情報を元にファンクション・アクセサリ指令
+        pressed_keys = keyboard.getPressed()
+        
         button.processButtons(buttons_responses, command_queue)
+        button.processPressedKeys(pressed_keys, command_queue)
+        
+        # button_responsesの中にマスコンで接続されているDCCアドレスがあるためつかう
+        keyboard.runControl(buttons_responses, command_queue)
         
         # 5秒に1回DBに問い合わせ
         if (time.time() - last_db_check) > 5.0:
             # 各マスコン(列車)のパラメータを反映
             for port, mascon in mascon_manager.mascons.items():
                 mascon.fetchDatabase()
-            
-            # ボタン設定を取得
-            button.getProfile()       
+
+            button.getProfile()
+            keyboard.getProfile()
             last_db_check = time.time()
         
         # 1秒に1回pyusbで接続・抜取情報を取得する
@@ -142,8 +152,8 @@ try:
             mascon_manager.addControl(adds)
             last_usb_check = time.time()
         
-        # 5秒に1回、なにもなくてもDSAirとの接続を検証する
-        if (time.time() - last_ping_check) > 5.0:
+        # 9秒に1回、なにもなくてもDSAirとの接続を検証する
+        if (time.time() - last_ping_check) > 9.0:
             Command.setPing(command_queue)
             last_ping_check = time.time()
         
@@ -155,7 +165,7 @@ try:
         # メインループにかかった時間(開発用)
         main_loop_time = time.time() - last_loop_time
         if main_loop_time > 0.4:
-            logger.warning('main loop: ' + str(main_loop_time))
+            logger.debug('メインループ時間が長いです: ' + str(main_loop_time))
 
         #確実に一周がMAIN_LOOP時間とする
         time.sleep(max(MAIN_LOOP - main_loop_time, 0))

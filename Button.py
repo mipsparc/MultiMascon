@@ -3,6 +3,7 @@
 from DB import DB
 from Command import Command
 import time
+import logging
 
 # 各マスコンのボタンを統一的に扱う
 class Button:
@@ -99,29 +100,29 @@ class Button:
         self.profile = DB.getButtons()
         
     # 前回も押してあったか判定
-    def isStillExistFromLastTime(self, addr, button_id):
+    def isStillExistFromLastTime(self, addr, button_id, mode):
         if f"{addr}-{button_id}" in self.last_buttons:
             return True
         
         return False
     
     # 次の出力ステート(1/0)を出す
-    def getLastButtonForAlternate(self, addr, button_id):
-        if f"{addr}-{button_id}" in self.last_buttons_for_alternate:
-            if self.last_buttons_for_alternate[f"{addr}-{button_id}"] + 0.3 > time.time():
+    def getLastButtonForAlternate(self, addr, button_id, mode):
+        if f"{mode}-{addr}-{button_id}" in self.last_buttons_for_alternate:
+            if self.last_buttons_for_alternate[f"{mode}-{addr}-{button_id}"] + 0.6 > time.time():
                 return 1
             else:
-                del(self.last_buttons_for_alternate[f"{addr}-{button_id}"])
+                del(self.last_buttons_for_alternate[f"{mode}-{addr}-{button_id}"])
                 return 0
         
-        self.last_buttons_for_alternate[f"{addr}-{button_id}"] = time.time()
+        self.last_buttons_for_alternate[f"{mode}-{addr}-{button_id}"] = time.time()
         return 1
 
     def processButtons(self, buttons_responses, command_queue):
         new_last_buttons = []
         
         for buttons_resp in buttons_responses:
-            if type(buttons_resp) is not dict:
+            if buttons_resp == {}:
                 continue
             addr = buttons_resp['addr']
             loco_id = buttons_resp['loco_id']
@@ -133,18 +134,46 @@ class Button:
                     send_key = ps['send_key']
                 except KeyError:
                     continue
-    
-                if self.isStillExistFromLastTime(addr, button_id):
-                    continue
                     
                 if assign_type == self.ASSIGN_TYPE_FUNC_ALTERNATE:
-                    send_value = self.getLastButtonForAlternate(addr, button_id)
+                    mode = 'button_func'
+                    if self.isStillExistFromLastTime(addr, button_id, mode):
+                        continue
+                    send_value = self.getLastButtonForAlternate(addr, button_id, mode)
                     Command.setLocoFunction(command_queue, addr, send_key, send_value)
                 
                 elif assign_type == self.ASSIGN_TYPE_ACCESSORY_ALTERNATE:
-                    send_value = self.getLastButtonForAlternate(addr, button_id)
+                    mode = 'button_accessory'
+                    if self.isStillExistFromLastTime(addr, button_id, mode):
+                        continue
+                    send_value = self.getLastButtonForAlternate(addr, button_id, mode)
                     Command.setTurnout(command_queue, send_key, send_value)
-                
-                new_last_buttons.append(f"{addr}-{button_id}")
+
+                new_last_buttons.append(f"{mode}-{addr}-{button_id}")
                 
         self.last_buttons = new_last_buttons
+        
+    def processPressedKeys(self, pressed_keys, command_queue):
+        new_last_buttons = []
+        
+        for pressed_key in pressed_keys:
+            if pressed_key['type'] == 'func':
+                mode = 'keyboard_func'
+                if self.isStillExistFromLastTime(pressed_key['loco_addr'], pressed_key['func_id'], mode):
+                    continue
+                send_value = self.getLastButtonForAlternate(pressed_key['loco_addr'], pressed_key['func_id'], mode)
+                Command.setLocoFunction(command_queue, pressed_key['loco_addr'], pressed_key['func_id'], send_value)
+            elif pressed_key['type'] == 'accessory':
+                mode = 'keyboard_accessory'
+                if self.isStillExistFromLastTime(pressed_key['accessory_id'], 0, mode):
+                    continue
+                # button_idはないので0をおく
+                send_value = self.getLastButtonForAlternate(pressed_key['accessory_id'], 0, mode)
+                Command.setTurnout(command_queue, pressed_key['accessory_id'], send_value)
+            else:
+                raise KeyError
+            
+        
+        
+
+    
