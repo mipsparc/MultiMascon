@@ -73,6 +73,9 @@ class Button:
         RYOJOU_START: '電GO 旅情編ツーハン START',
         RYOJOU_SHITEN: '電GO 旅情編ツーハン 視点',
         RYOJOU_ANNOUNCE: '電GO 旅情編ツーハン アナウンス',
+        RYOJOU_HORN: '電GO 旅情編ツーハン ホーンボタン',
+        RYOJOU_DOOR_L: '電GO 旅情編ツーハン 左扉',
+        RYOJOU_DOOR_R: '電GO 旅情編ツーハン 右扉',
         'title_ps1_dengo': '-----電車でGO PS1ワンハン・ツーハン-----',
         #PS1_DENGO_SELECT: '電車でGO PS1 SELECT',
         PS1_DENGO_START: '電車でGO PS1 START',
@@ -91,35 +94,43 @@ class Button:
         SW_MINUS: '電GO!! Switchワンハン -',
     }
     
-    last_buttons = {}
-    new_last_buttons = {}
-    last_buttons_for_alternate = {}
+    # DBから取得したボタンプロファイル
     profile = {}
+    # 前回押してあったボタン
+    last_buttons = {}
+    # 前回のボタン状態(1/0)
+    last_state = {}
+    # 今回押してあるボタン
+    next_pressed_buttons = {}
     
     def getProfile(self):
         self.profile = DB.getButtons()
         
     # 前回も押してあったか判定
-    def isStillExistFromLastTime(self, addr, button_id, mode):
-        if f"{addr}-{button_id}" in self.last_buttons:
+    def isStillPressed(self, addr, button_id, mode):
+        if f"{mode}-{addr}-{button_id}" in self.last_buttons:
             return True
         
         return False
     
-    # 次の出力ステート(1/0)を出す
-    def getLastButtonForAlternate(self, addr, button_id, mode):
-        if f"{mode}-{addr}-{button_id}" in self.last_buttons_for_alternate:
-            if self.last_buttons_for_alternate[f"{mode}-{addr}-{button_id}"] + 0.6 > time.time():
-                return 1
-            else:
-                del(self.last_buttons_for_alternate[f"{mode}-{addr}-{button_id}"])
-                return 0
+    # 次の出力ステート(1/0)を出す。変化なしの場合はFalse
+    def buttonPressed(self, addr, button_id, mode):
+        if self.isStillPressed(addr, button_id, mode):
+            return False
         
-        self.last_buttons_for_alternate[f"{mode}-{addr}-{button_id}"] = time.time()
-        return 1
+        if f"{mode}-{addr}-{button_id}" in self.last_state:
+            last_state = self.last_state[f"{mode}-{addr}-{button_id}"]
+        else:
+            # 新規のボタンのとき
+            self.last_state[f"{mode}-{addr}-{button_id}"] = 0
+        
+        self.last_state[f"{mode}-{addr}-{button_id}"] = int(not self.last_state[f"{mode}-{addr}-{button_id}"])
+        
+        return self.last_state[f"{mode}-{addr}-{button_id}"]
 
     def processButtons(self, buttons_responses, command_queue):
-        new_last_buttons = []
+        self.last_buttons = self.next_pressed_buttons
+        self.next_pressed_buttons = {}
         
         for buttons_resp in buttons_responses:
             if buttons_resp == {}:
@@ -134,25 +145,21 @@ class Button:
                     send_key = ps['send_key']
                 except KeyError:
                     continue
-                    
+                
                 if assign_type == self.ASSIGN_TYPE_FUNC_ALTERNATE:
                     mode = 'button_func'
-                    if self.isStillExistFromLastTime(addr, button_id, mode):
-                        continue
-                    send_value = self.getLastButtonForAlternate(addr, button_id, mode)
-                    Command.setLocoFunction(command_queue, addr, send_key, send_value)
+                    send_value = self.buttonPressed(addr, button_id, mode)
+                    if send_value != False:
+                        Command.setLocoFunction(command_queue, addr, send_key, send_value)
                 
                 elif assign_type == self.ASSIGN_TYPE_ACCESSORY_ALTERNATE:
                     mode = 'button_accessory'
-                    if self.isStillExistFromLastTime(addr, button_id, mode):
-                        continue
-                    send_value = self.getLastButtonForAlternate(addr, button_id, mode)
-                    Command.setTurnout(command_queue, send_key, send_value)
+                    send_value = self.buttonPressed(addr, button_id, mode)
+                    if send_value != False:
+                        Command.setTurnout(command_queue, send_key, send_value)
+            
+                self.next_pressed_buttons[f"{mode}-{addr}-{button_id}"] = True
 
-                new_last_buttons.append(f"{mode}-{addr}-{button_id}")
-                
-        self.last_buttons = new_last_buttons
-        
     def processPressedKeys(self, pressed_keys, command_queue):
         new_last_buttons = []
         
@@ -161,15 +168,15 @@ class Button:
                 mode = 'keyboard_func'
                 if self.isStillExistFromLastTime(pressed_key['loco_addr'], pressed_key['func_id'], mode):
                     continue
-                send_value = self.getLastButtonForAlternate(pressed_key['loco_addr'], pressed_key['func_id'], mode)
-                Command.setLocoFunction(command_queue, pressed_key['loco_addr'], pressed_key['func_id'], send_value)
+                send_value = self.buttonPressed(pressed_key['loco_addr'], pressed_key['func_id'], mode)
+                if send_value != False:
+                    Command.setLocoFunction(command_queue, pressed_key['loco_addr'], pressed_key['func_id'], send_value)
             elif pressed_key['type'] == 'accessory':
                 mode = 'keyboard_accessory'
-                if self.isStillExistFromLastTime(pressed_key['accessory_id'], 0, mode):
-                    continue
                 # button_idはないので0をおく
-                send_value = self.getLastButtonForAlternate(pressed_key['accessory_id'], 0, mode)
-                Command.setTurnout(command_queue, pressed_key['accessory_id'], send_value)
+                send_value = self.buttonPressed(pressed_key['accessory_id'], 0, mode)
+                if send_value != False:
+                    Command.setTurnout(command_queue, pressed_key['accessory_id'], send_value)
             else:
                 raise KeyError
             

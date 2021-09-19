@@ -6,6 +6,7 @@ import usb.core
 from Mascon import Mascon
 from Button import Button
 import logging
+import time
 
 class DENSYA_CON_T03(Mascon):
     BRAKE_TYPE = Mascon.BRAKE_TYPE_BP
@@ -26,12 +27,16 @@ class DENSYA_CON_T03(Mascon):
                 self.device = device
                 self.loco_id = loco_id
                 break
-        
+
         # 正しくアサインされたかの検査
         self.device
         
         # 切断などで無効状態か
         self.invalid = False
+        
+        self.device.reset()
+        time.sleep(0.1)
+        self.device.reset()
 
     def loadStatus(self):
         try:
@@ -74,7 +79,7 @@ class DENSYA_CON_T03(Mascon):
                 
                 if BT == 4:
                     self.buttons.append(Button.RYOJOU_SHITEN)
-                elif BT == 6:
+                elif BT == 2:
                     self.buttons.append(Button.RYOJOU_ANNOUNCE)
                 elif BT == 1:
                     self.buttons.append(Button.RYOJOU_HORN)
@@ -96,7 +101,7 @@ class DENSYA_CON_T03(Mascon):
             except usb.core.USBError:
                 logging.warning('USB接続失敗', exc_info=True)
                 self.invalid = True
-                
+                                
             finally:
                 self.buttons = list(set(self.buttons))
 

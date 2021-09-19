@@ -6,6 +6,7 @@ import usb.core
 from Mascon import Mascon
 from Button import Button
 import logging
+import time
 
 class DENSYA_CON_T01(Mascon):
     BRAKE_TYPE = Mascon.BRAKE_TYPE_KNOTCH
@@ -31,6 +32,10 @@ class DENSYA_CON_T01(Mascon):
         
         # 切断などで無効状態か
         self.invalid = False
+        
+        self.device.reset()
+        time.sleep(0.1)
+        self.device.reset()
                 
     def loadStatus(self):
         # デバイスがひきつづき存在するかどうか検証する

@@ -99,8 +99,11 @@ class Keyboard:
     
     def runControl(self, button_responses, command_queue):
         # マスコンですでに使われているDCCアドレスでは走行指令をしない
+        
         mascon_loco_addrs = []
         for button_response in button_responses:
+            if button_response == {}:
+                continue
             mascon_loco_addrs.append(button_response['addr'])
         
         pressed = self.pressed_special_keys
